@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { INITIAL_DEBT_DATA } from './data/initialData';
 import { PersonDebt } from './types';
 import { Header } from './components/Header';
-import { MetricCards } from './components/MetricCards';
 import { SummaryHighlights } from './components/SummaryHighlights';
 import { DebtTable } from './components/DebtTable';
 import { PaymentModal } from './components/PaymentModal';
@@ -111,11 +110,6 @@ export default function App() {
           onResetData={handleResetData}
           onAddNewPerson={() => setIsAddModalOpen(true)}
         />
-
-        {/* Global Key Metrics */}
-        <section id="section-metrics" aria-label="Métricas Principais">
-          <MetricCards data={data} />
-        </section>
 
         {/* Highlight Insights */}
         <section id="section-highlights" aria-label="Destaques e Resumo de Quitação">

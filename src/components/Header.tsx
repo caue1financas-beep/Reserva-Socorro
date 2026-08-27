@@ -1,18 +1,13 @@
 import React from 'react';
-import { Share2, RotateCcw, Plus, Receipt, Download } from 'lucide-react';
-import { PersonDebt } from '../types';
+import { Receipt } from 'lucide-react';
 
 interface HeaderProps {
-  onOpenShareModal: () => void;
-  onResetData: () => void;
-  onAddNewPerson: () => void;
+  onOpenShareModal?: () => void;
+  onResetData?: () => void;
+  onAddNewPerson?: () => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({
-  onOpenShareModal,
-  onResetData,
-  onAddNewPerson,
-}) => {
+export const Header: React.FC<HeaderProps> = () => {
   return (
     <header id="app-header" className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pb-6 border-b border-slate-800">
       <div>
@@ -29,36 +24,6 @@ export const Header: React.FC<HeaderProps> = ({
             </p>
           </div>
         </div>
-      </div>
-
-      <div className="flex flex-wrap items-center gap-2.5">
-        <button
-          type="button"
-          id="btn-reset-data"
-          onClick={onResetData}
-          title="Restaurar dados originais da planilha"
-          className="px-3 py-2 text-xs font-semibold text-slate-400 hover:text-slate-200 bg-slate-900 hover:bg-slate-800 border border-slate-800 rounded-xl flex items-center gap-1.5 transition"
-        >
-          <RotateCcw className="w-3.5 h-3.5" /> Restaurar Planilha
-        </button>
-
-        <button
-          type="button"
-          id="btn-add-person"
-          onClick={onAddNewPerson}
-          className="px-3 py-2 text-xs font-semibold text-slate-200 hover:text-white bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl flex items-center gap-1.5 transition"
-        >
-          <Plus className="w-4 h-4" /> Novo Participante
-        </button>
-
-        <button
-          type="button"
-          id="btn-open-share-summary"
-          onClick={onOpenShareModal}
-          className="px-4 py-2 text-xs font-bold text-slate-950 bg-emerald-400 hover:bg-emerald-300 rounded-xl shadow-lg shadow-emerald-950/50 flex items-center gap-2 transition"
-        >
-          <Share2 className="w-4 h-4" /> Gerar Resumo p/ Envio
-        </button>
       </div>
     </header>
   );
