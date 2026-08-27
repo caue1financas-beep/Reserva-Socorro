@@ -1,0 +1,6 @@
+{
+  "name": "Resumo de Débitos da Reserva",
+  "description": "Controle financeiro de reservas e alimentação com detalhamento de valores pagos e pendências por pessoa.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
