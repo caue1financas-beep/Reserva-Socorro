@@ -45,27 +45,34 @@ export function getPersonDeadlineBreakdown(person: PersonDebt): DeadlineBreakdow
   };
 }
 
+export const OFFICIAL_RESERVE_TARGET = 3000;
+export const ADVANCE_RESERVE_EXPENSE = 500;
+
 export function generateWhatsAppFullSummary(
   items: PersonDebt[],
   mode: 'all_deadlines' | 'reserve_focus' | 'food_focus' = 'all_deadlines'
 ): string {
-  const totalEsperadoReserva = items.reduce((acc, curr) => acc + curr.expectedReserve, 0);
+  const totalEsperadoReserva = OFFICIAL_RESERVE_TARGET; // R$ 3.000,00 oficial sem sobra
   const totalPagoReserva = items.reduce((acc, curr) => acc + getPersonDeadlineBreakdown(curr).paidForReserve, 0);
-  const totalPendenteReserva = items.reduce((acc, curr) => acc + getPersonDeadlineBreakdown(curr).pendingReserve, 0);
+  const totalPendenteReserva = Math.max(0, totalEsperadoReserva - totalPagoReserva);
 
   const totalEsperadoAlimentacao = items.reduce((acc, curr) => acc + curr.expectedFood, 0);
   const totalPagoAlimentacao = items.reduce((acc, curr) => acc + getPersonDeadlineBreakdown(curr).paidForFood, 0);
-  const totalPendenteAlimentacao = items.reduce((acc, curr) => acc + getPersonDeadlineBreakdown(curr).pendingFood, 0);
+  const totalPendenteAlimentacao = Math.max(0, totalEsperadoAlimentacao - totalPagoAlimentacao);
 
-  const totalGeral = items.reduce((acc, curr) => acc + curr.totalExpected, 0);
+  const totalGeral = totalEsperadoReserva + totalEsperadoAlimentacao;
   const totalPagoGeral = items.reduce((acc, curr) => acc + curr.paidAmount, 0);
-  const totalPendenteGeral = items.reduce((acc, curr) => acc + curr.pendingAmount, 0);
+  const saldoEmConta = totalPagoGeral - ADVANCE_RESERVE_EXPENSE;
 
   if (mode === 'reserve_focus') {
     let msg = `📅 *COBRANÇA: 1ª PARCELA - RESERVA (Vencimento: 10/09)*\n\n`;
     msg += `🏨 *Meta da Reserva:* ${formatCurrency(totalEsperadoReserva)}\n`;
     msg += `✅ *Arrecadado até agora:* ${formatCurrency(totalPagoReserva)}\n`;
     msg += `⚠️ *Falta arrecadar p/ 10/09:* *${formatCurrency(totalPendenteReserva)}*\n\n`;
+    msg += `💳 *FLUXO DE CAIXA ATUAL:*\n`;
+    msg += `• Total arrecadado: ${formatCurrency(totalPagoGeral)}\n`;
+    msg += `• Adiantamento pago da reserva: -${formatCurrency(ADVANCE_RESERVE_EXPENSE)}\n`;
+    msg += `• *Saldo disponível em conta:* *${formatCurrency(saldoEmConta)}*\n\n`;
     msg += `━━━━━━━━━━━━━━━━━━━━━\n`;
     msg += `*QUANTO FALTA CADA UM PAGAR DA RESERVA (ATÉ 10/09):*\n\n`;
 
@@ -77,7 +84,7 @@ export function generateWhatsAppFullSummary(
     pendingReservePeople.forEach((item, idx) => {
       const p = item.person;
       const b = item.breakdown;
-      msg += `${idx + 1}. 🔴 *${p.name}*: Falta *${formatCurrency(b.pendingReserve)}* (Reserva: ${formatCurrency(b.reserveExpected)} | Pago: ${formatCurrency(b.paidForReserve)})\n`;
+      msg += `${idx + 1}. 🔴 *${p.name}*: Falta *${formatCurrency(b.pendingReserve)}* (Pago: ${formatCurrency(b.paidForReserve)})\n`;
     });
 
     const paidReservePeople = items.filter((p) => getPersonDeadlineBreakdown(p).isReservePaid);
@@ -95,7 +102,7 @@ export function generateWhatsAppFullSummary(
   // Full / All deadlines
   let message = `📋 *RESUMO FINANCEIRO POR PRAZO DE PAGAMENTO*\n\n`;
   message += `📌 *1ª PARCELA: RESERVA (Vencimento: 10/09)*\n`;
-  message += `• Total da Reserva: ${formatCurrency(totalEsperadoReserva)}\n`;
+  message += `• Meta da Reserva: ${formatCurrency(totalEsperadoReserva)}\n`;
   message += `• Já Pago da Reserva: ${formatCurrency(totalPagoReserva)}\n`;
   message += `• *FALTA ARRECADAR (até 10/09): ${formatCurrency(totalPendenteReserva)}*\n\n`;
 
@@ -104,8 +111,13 @@ export function generateWhatsAppFullSummary(
   message += `• Já Pago da Alimentação: ${formatCurrency(totalPagoAlimentacao)}\n`;
   message += `• *Falta Arrecadar (até 07/10): ${formatCurrency(totalPendenteAlimentacao)}*\n\n`;
 
+  message += `💳 *SALDO EM CONTA & GASTOS:*\n`;
+  message += `• Total Arrecadado: ${formatCurrency(totalPagoGeral)}\n`;
+  message += `• (-) Adiantamento Pago da Reserva: ${formatCurrency(ADVANCE_RESERVE_EXPENSE)}\n`;
+  message += `• 👉 *SALDO ATUAL EM CONTA: ${formatCurrency(saldoEmConta)}*\n\n`;
+
   message += `━━━━━━━━━━━━━━━━━━━━━\n`;
-  message += `🔴 *DETALHAMENTO POR PESSOA (10/09 e 07/10):*\n\n`;
+  message += `🔴 *DETALHAMENTO POR PESSOA:*\n\n`;
 
   const sortedList = [...items].sort((a, b) => b.pendingAmount - a.pendingAmount);
 
@@ -130,7 +142,7 @@ export function generateWhatsAppFullSummary(
       message += `   • 🍽️ Alimentação (07/10): ⚠️ *Falta ${formatCurrency(b.pendingFood)}* (Pago: ${formatCurrency(b.paidForFood)} de ${formatCurrency(b.foodExpected)})\n`;
     }
 
-    message += `   👉 *Falta Total:* *${formatCurrency(person.pendingAmount)}* (Já pago: ${formatCurrency(person.paidAmount)} de ${formatCurrency(person.totalExpected)})\n\n`;
+    message += `   👉 *Falta Total:* *${formatCurrency(person.pendingAmount)}* (Já pago: ${formatCurrency(person.paidAmount)})\n\n`;
   });
 
   return message;

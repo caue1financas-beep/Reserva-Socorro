@@ -96,8 +96,8 @@ export const INITIAL_DEBT_DATA: PersonDebt[] = [
     expectedReserve: 188,
     expectedFood: 120,
     totalExpected: 308,
-    paidAmount: 50,
-    pendingAmount: 258,
+    paidAmount: 80,
+    pendingAmount: 228,
     status: 'parcial',
   },
   {
@@ -195,9 +195,9 @@ export const INITIAL_DEBT_DATA: PersonDebt[] = [
     expectedReserve: 0,
     expectedFood: 30,
     totalExpected: 30,
-    paidAmount: 30,
-    pendingAmount: 0,
-    status: 'quitado',
+    paidAmount: 0,
+    pendingAmount: 30,
+    status: 'pendente_total',
   },
   {
     id: '19',

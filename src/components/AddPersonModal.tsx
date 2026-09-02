@@ -59,16 +59,16 @@ export const AddPersonModal: React.FC<AddPersonModalProps> = ({ isOpen, onClose,
   };
 
   return (
-    <div id="add-person-modal-backdrop" className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-fade-in">
-      <div id="add-person-modal-card" className="bg-slate-900 border border-slate-700 w-full max-w-md rounded-2xl shadow-2xl overflow-hidden">
-        <div className="flex items-center justify-between p-5 border-b border-slate-800 bg-slate-950/60">
+    <div id="add-person-modal-backdrop" className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fade-in">
+      <div id="add-person-modal-card" className="bg-white border border-slate-200 w-full max-w-md rounded-2xl shadow-2xl overflow-hidden">
+        <div className="flex items-center justify-between p-5 border-b border-slate-100 bg-slate-50">
           <div className="flex items-center gap-2">
-            <UserPlus className="w-5 h-5 text-emerald-400" />
-            <h3 className="text-lg font-bold text-white">Adicionar Participante</h3>
+            <UserPlus className="w-5 h-5 text-emerald-700" />
+            <h3 className="text-lg font-bold text-slate-900">Adicionar Participante</h3>
           </div>
           <button
             onClick={onClose}
-            className="text-slate-400 hover:text-white p-2 rounded-lg hover:bg-slate-800 transition"
+            className="text-slate-400 hover:text-slate-700 p-2 rounded-lg hover:bg-slate-200 transition"
           >
             <X className="w-5 h-5" />
           </button>
@@ -76,7 +76,7 @@ export const AddPersonModal: React.FC<AddPersonModalProps> = ({ isOpen, onClose,
 
         <form onSubmit={handleSubmit} className="p-5 space-y-4">
           <div>
-            <label className="block text-xs font-semibold uppercase text-slate-300 mb-1.5">
+            <label className="block text-xs font-bold uppercase text-slate-700 mb-1.5">
               Nome do Participante
             </label>
             <input
@@ -86,13 +86,13 @@ export const AddPersonModal: React.FC<AddPersonModalProps> = ({ isOpen, onClose,
               placeholder="Ex: Gabriel"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full bg-slate-950 border border-slate-800 rounded-xl py-2.5 px-3 text-white text-sm focus:outline-none focus:border-emerald-500"
+              className="w-full bg-white border border-slate-300 rounded-xl py-2.5 px-3 text-slate-900 text-sm focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 shadow-xs"
               autoFocus
             />
           </div>
 
           <div>
-            <label className="block text-xs font-semibold uppercase text-slate-300 mb-1.5">
+            <label className="block text-xs font-bold uppercase text-slate-700 mb-1.5">
               Categoria / Pacote
             </label>
             <div className="grid grid-cols-2 gap-2">
@@ -101,31 +101,31 @@ export const AddPersonModal: React.FC<AddPersonModalProps> = ({ isOpen, onClose,
                 onClick={() => handleCategoryChange('adulto')}
                 className={`p-3 rounded-xl border text-left transition ${
                   category === 'adulto'
-                    ? 'bg-slate-800 border-emerald-500 text-white'
-                    : 'bg-slate-950 border-slate-800 text-slate-400'
+                    ? 'bg-emerald-50/80 border-emerald-500 text-slate-900 shadow-xs'
+                    : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
                 }`}
               >
-                <div className="font-bold text-xs">Adulto</div>
-                <div className="text-[11px] text-slate-400">Total: R$ 308 (188+120)</div>
+                <div className="font-bold text-xs text-slate-900">Adulto</div>
+                <div className="text-[11px] text-slate-500">Total: R$ 308 (188+120)</div>
               </button>
               <button
                 type="button"
                 onClick={() => handleCategoryChange('crianca_outros')}
                 className={`p-3 rounded-xl border text-left transition ${
                   category === 'crianca_outros'
-                    ? 'bg-slate-800 border-cyan-500 text-white'
-                    : 'bg-slate-950 border-slate-800 text-slate-400'
+                    ? 'bg-cyan-50/80 border-cyan-500 text-slate-900 shadow-xs'
+                    : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
                 }`}
               >
-                <div className="font-bold text-xs">Criança / Taxa</div>
-                <div className="text-[11px] text-slate-400">Total: R$ 30 (Alimentação)</div>
+                <div className="font-bold text-xs text-slate-900">Criança / Taxa</div>
+                <div className="text-[11px] text-slate-500">Total: R$ 30 (Alimentação)</div>
               </button>
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-slate-400 mb-1">
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
                 Reserva (R$)
               </label>
               <input
@@ -133,11 +133,11 @@ export const AddPersonModal: React.FC<AddPersonModalProps> = ({ isOpen, onClose,
                 step="any"
                 value={expectedReserve}
                 onChange={(e) => setExpectedReserve(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl py-2 px-3 text-white text-xs"
+                className="w-full bg-white border border-slate-300 rounded-xl py-2 px-3 text-slate-900 text-xs focus:border-emerald-500"
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-400 mb-1">
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
                 Alimentação (R$)
               </label>
               <input
@@ -145,13 +145,13 @@ export const AddPersonModal: React.FC<AddPersonModalProps> = ({ isOpen, onClose,
                 step="any"
                 value={expectedFood}
                 onChange={(e) => setExpectedFood(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl py-2 px-3 text-white text-xs"
+                className="w-full bg-white border border-slate-300 rounded-xl py-2 px-3 text-slate-900 text-xs focus:border-emerald-500"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-400 mb-1">
+            <label className="block text-xs font-semibold text-slate-700 mb-1">
               Valor Já Pago Inicialmente (R$)
             </label>
             <input
@@ -159,12 +159,12 @@ export const AddPersonModal: React.FC<AddPersonModalProps> = ({ isOpen, onClose,
               step="any"
               value={paidAmount}
               onChange={(e) => setPaidAmount(e.target.value)}
-              className="w-full bg-slate-950 border border-slate-800 rounded-xl py-2 px-3 text-white text-xs"
+              className="w-full bg-white border border-slate-300 rounded-xl py-2 px-3 text-slate-900 text-xs focus:border-emerald-500"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-400 mb-1">
+            <label className="block text-xs font-semibold text-slate-700 mb-1">
               Observações (opcional)
             </label>
             <input
@@ -172,21 +172,21 @@ export const AddPersonModal: React.FC<AddPersonModalProps> = ({ isOpen, onClose,
               placeholder="Ex: Convidado do Lucas"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              className="w-full bg-slate-950 border border-slate-800 rounded-xl py-2 px-3 text-slate-200 text-xs"
+              className="w-full bg-white border border-slate-300 rounded-xl py-2 px-3 text-slate-800 text-xs focus:border-emerald-500"
             />
           </div>
 
-          <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-800">
+          <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-200">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-xs text-slate-400 hover:text-white rounded-xl hover:bg-slate-800"
+              className="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-900 rounded-xl hover:bg-slate-100"
             >
               Cancelar
             </button>
             <button
               type="submit"
-              className="px-5 py-2 text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl shadow-lg flex items-center gap-1.5"
+              className="px-5 py-2 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-sm flex items-center gap-1.5"
             >
               <Check className="w-4 h-4" /> Adicionar
             </button>

@@ -2,13 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { INITIAL_DEBT_DATA } from './data/initialData';
 import { PersonDebt } from './types';
 import { Header } from './components/Header';
+import { WhatsAppSummarySection } from './components/WhatsAppSummarySection';
+import { CashFlowCard } from './components/CashFlowCard';
 import { SummaryHighlights } from './components/SummaryHighlights';
 import { DebtTable } from './components/DebtTable';
 import { PaymentModal } from './components/PaymentModal';
 import { ShareSummaryModal } from './components/ShareSummaryModal';
 import { AddPersonModal } from './components/AddPersonModal';
 
-const STORAGE_KEY = 'reserva_debitos_data_v2';
+const STORAGE_KEY = 'reserva_debitos_data_v3';
 
 export default function App() {
   const [data, setData] = useState<PersonDebt[]>(() => {
@@ -90,12 +92,12 @@ export default function App() {
   };
 
   return (
-    <div id="main-app" className="min-h-screen bg-slate-950 text-slate-100 font-sans antialiased selection:bg-emerald-500 selection:text-black">
+    <div id="main-app" className="min-h-screen bg-slate-100/90 text-slate-800 font-sans antialiased selection:bg-emerald-500 selection:text-white pb-12">
       {/* Toast Notification */}
       {toastMessage && (
         <div
           id="toast-banner"
-          className="fixed top-5 right-5 z-50 bg-emerald-600 text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow-xl border border-emerald-400 animate-fade-in flex items-center gap-2"
+          className="fixed top-5 right-5 z-50 bg-emerald-700 text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow-xl border border-emerald-500 animate-fade-in flex items-center gap-2"
         >
           <span>✓</span>
           <span>{toastMessage}</span>
@@ -103,13 +105,23 @@ export default function App() {
       )}
 
       {/* Main Container */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-7">
         {/* Header */}
         <Header
           onOpenShareModal={() => setIsShareModalOpen(true)}
           onResetData={handleResetData}
           onAddNewPerson={() => setIsAddModalOpen(true)}
         />
+
+        {/* Cash Flow & Account Balance Section */}
+        <section id="section-cashflow" aria-label="Fluxo de Caixa e Saldo em Conta">
+          <CashFlowCard data={data} />
+        </section>
+
+        {/* WhatsApp Ready-to-Send Summary Box */}
+        <section id="section-whatsapp-summary" aria-label="Resumo para WhatsApp">
+          <WhatsAppSummarySection data={data} />
+        </section>
 
         {/* Highlight Insights */}
         <section id="section-highlights" aria-label="Destaques e Resumo de Quitação">
@@ -121,12 +133,12 @@ export default function App() {
 
         {/* Full Debt & Payment Interactive Table */}
         <section id="section-table" aria-label="Tabela Detalhada de Participantes">
-          <div className="mb-3 flex items-center justify-between">
+          <div className="mb-3.5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
             <div>
-              <h2 className="text-lg font-bold text-white tracking-tight">
+              <h2 className="text-lg font-bold text-slate-900 tracking-tight">
                 Detalhamento Completo por Participante
               </h2>
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-slate-500">
                 Visualize quem já pagou, quanto falta para cada um e atualize os recebimentos
               </p>
             </div>
