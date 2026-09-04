@@ -48,6 +48,24 @@ export function getPersonDeadlineBreakdown(person: PersonDebt): DeadlineBreakdow
 export const OFFICIAL_RESERVE_TARGET = 3000;
 export const ADVANCE_RESERVE_EXPENSE = 500;
 
+export const PIX_CONFIG = {
+  bank: 'Banco Inter',
+  holder: 'Cauê Pavanelli',
+  key: 'b235f650-d1b3-4854-952a-bf6b4a949c70',
+  type: 'Aleatória',
+};
+
+export function getPixFormattedBlock(): string {
+  let block = `━━━━━━━━━━━━━━━━━━━━━\n`;
+  block += `📱 *DADOS PARA PAGAMENTO VIA PIX*\n`;
+  block += `🏦 *Banco:* ${PIX_CONFIG.bank}\n`;
+  block += `👤 *Titular:* ${PIX_CONFIG.holder}\n`;
+  block += `🔑 *Chave Pix (${PIX_CONFIG.type}):*\n`;
+  block += `${PIX_CONFIG.key}\n\n`;
+  block += `_Favor enviar o comprovante após a transferência para baixa no sistema!_ 👍`;
+  return block;
+}
+
 export function generateWhatsAppFullSummary(
   items: PersonDebt[],
   mode: 'all_deadlines' | 'reserve_focus' | 'food_focus' = 'all_deadlines'
@@ -95,7 +113,8 @@ export function generateWhatsAppFullSummary(
       });
     }
 
-    msg += `\n_Lembrando: A 2ª parcela (Alimentação) vence em 07/10._`;
+    msg += `\n_Lembrando: A 2ª parcela (Alimentação) vence em 07/10._\n\n`;
+    msg += getPixFormattedBlock();
     return msg;
   }
 
@@ -145,6 +164,7 @@ export function generateWhatsAppFullSummary(
     message += `   👉 *Falta Total:* *${formatCurrency(person.pendingAmount)}* (Já pago: ${formatCurrency(person.paidAmount)})\n\n`;
   });
 
+  message += getPixFormattedBlock();
   return message;
 }
 
@@ -180,7 +200,8 @@ export function generateIndividualMessage(person: PersonDebt): string {
   msg += `\n━━━━━━━━━━━━━━━━━━━━━\n`;
   msg += `💰 *Saldo Devedor Total Geral:* *${formatCurrency(person.pendingAmount)}*\n`;
   msg += `(Total do pacote: ${formatCurrency(person.totalExpected)} | Total já pago: ${formatCurrency(person.paidAmount)})\n\n`;
-  msg += `Qualquer dúvida ou comprovante, só me mandar por aqui! 👍`;
+  msg += `Qualquer dúvida ou comprovante, só me mandar por aqui! 👍\n\n`;
+  msg += getPixFormattedBlock();
 
   return msg;
 }

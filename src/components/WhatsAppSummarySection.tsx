@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { Copy, Check, MessageSquareText, Calendar, Building2, FileText } from 'lucide-react';
+import { Copy, Check, MessageSquareText, Calendar, Building2, FileText, QrCode, Key } from 'lucide-react';
 import { PersonDebt } from '../types';
-import { generateWhatsAppFullSummary } from '../utils/formatters';
+import { generateWhatsAppFullSummary, getPixFormattedBlock, PIX_CONFIG } from '../utils/formatters';
 
 interface WhatsAppSummarySectionProps {
   data: PersonDebt[];
@@ -9,6 +9,7 @@ interface WhatsAppSummarySectionProps {
 
 export const WhatsAppSummarySection: React.FC<WhatsAppSummarySectionProps> = ({ data }) => {
   const [copiedMode, setCopiedMode] = useState<string | null>(null);
+  const [copiedPix, setCopiedPix] = useState(false);
   const [activeTab, setActiveTab] = useState<'all' | 'reserve_only' | 'compact'>('all');
 
   const pendingList = data.filter((p) => p.pendingAmount > 0);
@@ -36,7 +37,7 @@ export const WhatsAppSummarySection: React.FC<WhatsAppSummarySectionProps> = ({ 
       msg += `${idx + 1}. *${p.name}*: Falta *R$ ${p.pendingAmount},00* (Pago: R$ ${p.paidAmount},00)\n`;
     });
 
-    msg += `\n_Favor enviar o comprovante após realizar o Pix!_ 👍`;
+    msg += `\n` + getPixFormattedBlock();
     return msg;
   };
 
@@ -58,19 +59,29 @@ export const WhatsAppSummarySection: React.FC<WhatsAppSummarySectionProps> = ({ 
     }
   };
 
+  const handleCopyPixOnly = async () => {
+    try {
+      await navigator.clipboard.writeText(PIX_CONFIG.key);
+      setCopiedPix(true);
+      setTimeout(() => setCopiedPix(false), 2500);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   return (
-    <div id="whatsapp-summary-box" className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm relative overflow-hidden">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100">
+    <div id="whatsapp-summary-box" className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm relative overflow-hidden space-y-4">
+      {/* Header & Main Actions */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-slate-100">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-700">
+          <div className="w-9 h-9 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-700 shrink-0">
             <MessageSquareText className="w-5 h-5" />
           </div>
           <div>
             <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
               Resumo Formatado para WhatsApp
               <span className="text-[10px] bg-emerald-50 text-emerald-800 px-2.5 py-0.5 rounded-full border border-emerald-200 font-bold">
-                Copiar e Colar
+                Pix Incluso
               </span>
             </h3>
             <p className="text-xs text-slate-500">
@@ -79,31 +90,90 @@ export const WhatsAppSummarySection: React.FC<WhatsAppSummarySectionProps> = ({ 
           </div>
         </div>
 
-        {/* Copy CTA Button */}
+        {/* Buttons: Copiar Mensagem + Copiar Apenas Chave Pix */}
+        <div className="flex flex-wrap items-center gap-2.5">
+          {/* Quick Copy Pix Only Button */}
+          <button
+            type="button"
+            id="btn-copy-pix-only-inline"
+            onClick={handleCopyPixOnly}
+            className={`px-3.5 py-2 text-xs font-bold rounded-xl flex items-center justify-center gap-2 transition border shadow-2xs ${
+              copiedPix
+                ? 'bg-amber-100 border-amber-300 text-amber-900'
+                : 'bg-white hover:bg-slate-50 border-slate-300 text-slate-700 hover:text-slate-900'
+            }`}
+          >
+            {copiedPix ? (
+              <>
+                <Check className="w-4 h-4 text-emerald-700" />
+                <span>Chave Pix Copiada!</span>
+              </>
+            ) : (
+              <>
+                <Key className="w-4 h-4 text-amber-600" />
+                <span>Copiar Apenas a Chave Pix</span>
+              </>
+            )}
+          </button>
+
+          {/* Copy Full Message Button */}
+          <button
+            type="button"
+            id="btn-copy-whatsapp-inline"
+            onClick={() => handleCopy(activeTab)}
+            className={`px-4 py-2 text-xs font-bold rounded-xl flex items-center justify-center gap-2 transition shadow-sm ${
+              copiedMode
+                ? 'bg-emerald-700 text-white'
+                : 'bg-emerald-600 hover:bg-emerald-700 text-white'
+            }`}
+          >
+            {copiedMode ? (
+              <>
+                <Check className="w-4 h-4" /> Copiado com Pix Incluso!
+              </>
+            ) : (
+              <>
+                <Copy className="w-4 h-4" /> Copiar Mensagem Pronta
+              </>
+            )}
+          </button>
+        </div>
+      </div>
+
+      {/* Prominent Pix Card for Quick Reference */}
+      <div id="pix-reference-banner" className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg bg-emerald-100 border border-emerald-300 text-emerald-800 flex items-center justify-center shrink-0">
+            <QrCode className="w-4 h-4" />
+          </div>
+          <div>
+            <div className="flex flex-wrap items-center gap-2 text-slate-900 font-bold">
+              <span>{PIX_CONFIG.bank}</span>
+              <span className="text-slate-400">•</span>
+              <span>Titular: {PIX_CONFIG.holder}</span>
+              <span className="text-[10px] bg-white border border-slate-200 text-slate-600 px-2 py-0.5 rounded font-mono font-medium">
+                Chave {PIX_CONFIG.type}
+              </span>
+            </div>
+            <div className="font-mono text-xs text-slate-800 font-bold select-all mt-0.5 tracking-tight">
+              {PIX_CONFIG.key}
+            </div>
+          </div>
+        </div>
+
         <button
           type="button"
-          id="btn-copy-whatsapp-inline"
-          onClick={() => handleCopy(activeTab)}
-          className={`px-4 py-2 text-xs font-bold rounded-xl flex items-center justify-center gap-2 transition shadow-sm ${
-            copiedMode
-              ? 'bg-emerald-700 text-white'
-              : 'bg-emerald-600 hover:bg-emerald-700 text-white'
-          }`}
+          id="btn-quick-pix-banner-copy"
+          onClick={handleCopyPixOnly}
+          className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-white border border-slate-300 hover:border-slate-400 text-slate-700 hover:text-slate-900 flex items-center gap-1.5 shrink-0 transition shadow-2xs"
         >
-          {copiedMode ? (
-            <>
-              <Check className="w-4 h-4" /> Copiado para a Área de Transferência!
-            </>
-          ) : (
-            <>
-              <Copy className="w-4 h-4" /> Copiar Mensagem Pronta
-            </>
-          )}
+          {copiedPix ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5 text-slate-500" />}
+          <span>{copiedPix ? 'Copiada!' : 'Copiar Chave'}</span>
         </button>
       </div>
 
       {/* Tabs */}
-      <div className="flex flex-wrap gap-2 pt-3 pb-2 text-xs">
+      <div className="flex flex-wrap gap-2 pt-1 pb-1 text-xs">
         <button
           type="button"
           onClick={() => setActiveTab('all')}
@@ -142,7 +212,7 @@ export const WhatsAppSummarySection: React.FC<WhatsAppSummarySectionProps> = ({ 
       </div>
 
       {/* Message Preview Box */}
-      <div className="relative mt-2">
+      <div className="relative">
         <pre className="bg-slate-50 text-slate-800 p-4 rounded-xl text-xs font-mono border border-slate-200 whitespace-pre-wrap leading-relaxed max-h-64 overflow-y-auto select-all shadow-inner">
           {textToDisplay}
         </pre>

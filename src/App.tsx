@@ -10,7 +10,7 @@ import { PaymentModal } from './components/PaymentModal';
 import { ShareSummaryModal } from './components/ShareSummaryModal';
 import { AddPersonModal } from './components/AddPersonModal';
 
-const STORAGE_KEY = 'reserva_debitos_data_v3';
+const STORAGE_KEY = 'reserva_debitos_data_v4';
 
 export default function App() {
   const [data, setData] = useState<PersonDebt[]>(() => {

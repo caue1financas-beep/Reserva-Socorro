@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { X, Copy, Check, Share2, FileText, Calendar, Building2, UtensilsCrossed } from 'lucide-react';
+import { X, Copy, Check, Share2, FileText, Calendar, Building2, QrCode, Key } from 'lucide-react';
 import { PersonDebt } from '../types';
-import { generateWhatsAppFullSummary } from '../utils/formatters';
+import { generateWhatsAppFullSummary, PIX_CONFIG } from '../utils/formatters';
 
 interface ShareSummaryModalProps {
   isOpen: boolean;
@@ -14,6 +14,7 @@ export const ShareSummaryModal: React.FC<ShareSummaryModalProps> = ({ isOpen, on
 
   const [activeMode, setActiveMode] = useState<'all_deadlines' | 'reserve_focus'>('all_deadlines');
   const [copied, setCopied] = useState(false);
+  const [copiedPix, setCopiedPix] = useState(false);
 
   const summaryText = generateWhatsAppFullSummary(data, activeMode);
 
@@ -24,6 +25,16 @@ export const ShareSummaryModal: React.FC<ShareSummaryModalProps> = ({ isOpen, on
       setTimeout(() => setCopied(false), 2500);
     } catch (err) {
       console.error('Failed to copy', err);
+    }
+  };
+
+  const handleCopyPixOnly = async () => {
+    try {
+      await navigator.clipboard.writeText(PIX_CONFIG.key);
+      setCopiedPix(true);
+      setTimeout(() => setCopiedPix(false), 2500);
+    } catch (err) {
+      console.error('Failed to copy pix', err);
     }
   };
 
@@ -42,7 +53,7 @@ export const ShareSummaryModal: React.FC<ShareSummaryModalProps> = ({ isOpen, on
             </div>
             <div>
               <h3 className="text-lg font-bold text-slate-900">Resumo Formatado para Envio</h3>
-              <p className="text-xs text-slate-500">Pronto para copiar e colar no WhatsApp ou grupo com os prazos definidos</p>
+              <p className="text-xs text-slate-500">Pronto para copiar e colar no WhatsApp com dados de Pix inclusos</p>
             </div>
           </div>
           <button
@@ -80,10 +91,43 @@ export const ShareSummaryModal: React.FC<ShareSummaryModalProps> = ({ isOpen, on
           </button>
         </div>
 
-        {/* Body Textarea */}
-        <div className="p-5 flex-1 overflow-y-auto space-y-4">
+        {/* Body */}
+        <div className="p-5 flex-1 overflow-y-auto space-y-3">
+          {/* Quick Pix Bar */}
+          <div className="bg-emerald-50/70 border border-emerald-200 rounded-xl p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 text-xs">
+            <div className="flex items-center gap-2.5">
+              <div className="w-7 h-7 rounded-lg bg-emerald-600 text-white flex items-center justify-center shrink-0">
+                <QrCode className="w-4 h-4" />
+              </div>
+              <div>
+                <div className="font-bold text-slate-900 flex items-center gap-1.5">
+                  <span>Pix: {PIX_CONFIG.bank}</span>
+                  <span className="text-slate-400">•</span>
+                  <span>{PIX_CONFIG.holder}</span>
+                </div>
+                <div className="font-mono text-[11px] text-slate-700 font-semibold select-all">
+                  {PIX_CONFIG.key}
+                </div>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              id="btn-copy-pix-modal-fast"
+              onClick={handleCopyPixOnly}
+              className={`px-3 py-1.5 text-xs font-semibold rounded-lg flex items-center gap-1.5 transition border shrink-0 ${
+                copiedPix
+                  ? 'bg-amber-100 border-amber-300 text-amber-900'
+                  : 'bg-white hover:bg-slate-100 border-slate-300 text-slate-700'
+              }`}
+            >
+              {copiedPix ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Key className="w-3.5 h-3.5 text-amber-600" />}
+              <span>{copiedPix ? 'Chave Copiada!' : 'Copiar Apenas a Chave Pix'}</span>
+            </button>
+          </div>
+
           <div className="relative">
-            <pre className="bg-slate-50 text-slate-800 p-4 rounded-xl text-xs font-mono border border-slate-200 whitespace-pre-wrap leading-relaxed select-all shadow-inner">
+            <pre className="bg-slate-50 text-slate-800 p-4 rounded-xl text-xs font-mono border border-slate-200 whitespace-pre-wrap leading-relaxed select-all shadow-inner max-h-80 overflow-y-auto">
               {summaryText}
             </pre>
           </div>
@@ -100,15 +144,21 @@ export const ShareSummaryModal: React.FC<ShareSummaryModalProps> = ({ isOpen, on
             <FileText className="w-4 h-4 text-slate-500" /> Imprimir Relatório
           </button>
 
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2.5">
             <button
               type="button"
-              id="btn-close-share"
-              onClick={onClose}
-              className="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-900 rounded-xl hover:bg-slate-100 transition"
+              id="btn-modal-copy-pix-secondary"
+              onClick={handleCopyPixOnly}
+              className={`px-3.5 py-2 text-xs font-bold rounded-xl flex items-center gap-1.5 transition border shadow-2xs ${
+                copiedPix
+                  ? 'bg-amber-100 border-amber-300 text-amber-900'
+                  : 'bg-white hover:bg-slate-100 border-slate-300 text-slate-700'
+              }`}
             >
-              Fechar
+              {copiedPix ? <Check className="w-4 h-4 text-emerald-600" /> : <Key className="w-4 h-4 text-amber-600" />}
+              <span>{copiedPix ? 'Chave Pix Copiada!' : 'Copiar Apenas a Chave Pix'}</span>
             </button>
+
             <button
               type="button"
               id="btn-copy-summary"
@@ -125,7 +175,7 @@ export const ShareSummaryModal: React.FC<ShareSummaryModalProps> = ({ isOpen, on
                 </>
               ) : (
                 <>
-                  <Copy className="w-4 h-4" /> Copiar Mensagem
+                  <Copy className="w-4 h-4" /> Copiar Mensagem Completa
                 </>
               )}
             </button>
