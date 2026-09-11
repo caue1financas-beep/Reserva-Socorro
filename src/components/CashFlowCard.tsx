@@ -113,13 +113,19 @@ export const CashFlowCard: React.FC<CashFlowCardProps> = ({ data }) => {
               {/* Rateio por pessoa */}
               <tr className="bg-slate-50 text-slate-600">
                 <td className="py-2.5 px-4 flex items-center gap-2">
-                  <Calculator className="w-3.5 h-3.5 text-slate-500" />
-                  <span>
-                    Rateio da Reserva por pessoa ({totalAdultos} adultos para meta de {formatCurrency(OFFICIAL_RESERVE_TARGET)})
-                  </span>
+                  <Calculator className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+                  <div>
+                    <span>
+                      Rateio Mantido: <strong className="text-slate-800">R$ 188,00</strong> por adulto ({totalAdultos} adultos = {formatCurrency(totalAdultos * 188)})
+                    </span>
+                    <p className="text-[11px] text-slate-400">
+                      Diferença de {formatCurrency(Math.max(0, OFFICIAL_RESERVE_TARGET - totalAdultos * 188))} para a meta de {formatCurrency(OFFICIAL_RESERVE_TARGET)} será compensada na alimentação geral
+                    </p>
+                  </div>
                 </td>
                 <td className="py-2.5 px-4 text-right font-medium text-slate-800">
-                  R$ {rateioExato.toFixed(2).replace('.', ',')} ➔ <span className="font-bold text-slate-950">R$ 188,00</span>
+                  <span className="font-bold text-slate-950 text-sm">R$ 188,00</span>
+                  <span className="block text-[10px] text-emerald-700 font-semibold">fixado</span>
                 </td>
               </tr>
             </tbody>

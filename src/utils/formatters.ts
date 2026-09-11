@@ -45,7 +45,7 @@ export function getPersonDeadlineBreakdown(person: PersonDebt): DeadlineBreakdow
   };
 }
 
-export const OFFICIAL_RESERVE_TARGET = 3000;
+export const OFFICIAL_RESERVE_TARGET = 2500;
 export const ADVANCE_RESERVE_EXPENSE = 500;
 
 export const PIX_CONFIG = {
@@ -70,7 +70,7 @@ export function generateWhatsAppFullSummary(
   items: PersonDebt[],
   mode: 'all_deadlines' | 'reserve_focus' | 'food_focus' = 'all_deadlines'
 ): string {
-  const totalEsperadoReserva = OFFICIAL_RESERVE_TARGET; // R$ 3.000,00 oficial sem sobra
+  const totalEsperadoReserva = OFFICIAL_RESERVE_TARGET; // R$ 2.500,00 oficial
   const totalPagoReserva = items.reduce((acc, curr) => acc + getPersonDeadlineBreakdown(curr).paidForReserve, 0);
   const totalPendenteReserva = Math.max(0, totalEsperadoReserva - totalPagoReserva);
 
