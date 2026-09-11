@@ -37,9 +37,9 @@ export const SummaryHighlights: React.FC<SummaryHighlightsProps> = ({ data, onOp
               <Building2 className="w-4 h-4" />
             </div>
             <div>
-              <h4 className="font-bold text-slate-900 text-sm">Falta Pagar da Reserva</h4>
-              <span className="text-[11px] text-amber-700 font-medium flex items-center gap-1">
-                <Calendar className="w-3 h-3" /> Vence em 10/09
+              <h4 className="font-bold text-slate-900 text-sm">Pendente da Reserva</h4>
+              <span className="text-[11px] text-emerald-700 font-semibold flex items-center gap-1">
+                ✓ Imóvel 100% Quitado
               </span>
             </div>
           </div>

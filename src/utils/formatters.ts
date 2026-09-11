@@ -47,6 +47,8 @@ export function getPersonDeadlineBreakdown(person: PersonDebt): DeadlineBreakdow
 
 export const OFFICIAL_RESERVE_TARGET = 2500;
 export const ADVANCE_RESERVE_EXPENSE = 500;
+export const SETTLEMENT_RESERVE_EXPENSE = 2000;
+export const TOTAL_RESERVE_EXPENSES = 2500;
 
 export const PIX_CONFIG = {
   bank: 'Banco Inter',
@@ -80,19 +82,22 @@ export function generateWhatsAppFullSummary(
 
   const totalGeral = totalEsperadoReserva + totalEsperadoAlimentacao;
   const totalPagoGeral = items.reduce((acc, curr) => acc + curr.paidAmount, 0);
-  const saldoEmConta = totalPagoGeral - ADVANCE_RESERVE_EXPENSE;
+  const totalGastosReserva = TOTAL_RESERVE_EXPENSES; // R$ 2.500,00 (Adiantamento R$ 500 + Quitação R$ 2.000)
+  const saldoEmConta = totalPagoGeral - totalGastosReserva;
 
   if (mode === 'reserve_focus') {
-    let msg = `📅 *COBRANÇA: 1ª PARCELA - RESERVA (Vencimento: 10/09)*\n\n`;
-    msg += `🏨 *Meta da Reserva:* ${formatCurrency(totalEsperadoReserva)}\n`;
-    msg += `✅ *Arrecadado até agora:* ${formatCurrency(totalPagoReserva)}\n`;
-    msg += `⚠️ *Falta arrecadar p/ 10/09:* *${formatCurrency(totalPendenteReserva)}*\n\n`;
+    let msg = `📅 *STATUS DA RESERVA: 100% QUITADA COM O IMÓVEL*\n\n`;
+    msg += `🏨 *Custo Total da Reserva:* ${formatCurrency(totalEsperadoReserva)}\n`;
+    msg += `✅ *Total Pago ao Proprietário:* ${formatCurrency(totalGastosReserva)} (Quitado!)\n`;
+    msg += `👥 *Arrecadado dos participantes:* ${formatCurrency(totalPagoGeral)}\n\n`;
     msg += `💳 *FLUXO DE CAIXA ATUAL:*\n`;
-    msg += `• Total arrecadado: ${formatCurrency(totalPagoGeral)}\n`;
-    msg += `• Adiantamento pago da reserva: -${formatCurrency(ADVANCE_RESERVE_EXPENSE)}\n`;
-    msg += `• *Saldo disponível em conta:* *${formatCurrency(saldoEmConta)}*\n\n`;
+    msg += `• Adiantamento pago reserva: -${formatCurrency(ADVANCE_RESERVE_EXPENSE)}\n`;
+    msg += `• Quitação reserva paga: -${formatCurrency(SETTLEMENT_RESERVE_EXPENSE)}\n`;
+    msg += `• Total de gastos da reserva: -${formatCurrency(totalGastosReserva)}\n`;
+    msg += `• Valores arrecadados: ${formatCurrency(totalPagoGeral)}\n`;
+    msg += `• 👉 *SALDO ATUAL EM CONTA:* *${formatCurrency(saldoEmConta)}*\n\n`;
     msg += `━━━━━━━━━━━━━━━━━━━━━\n`;
-    msg += `*QUANTO FALTA CADA UM PAGAR DA RESERVA (ATÉ 10/09):*\n\n`;
+    msg += `*QUANTO FALTA CADA UM PAGAR DA RESERVA:*\n\n`;
 
     const pendingReservePeople = items
       .map((p) => ({ person: p, breakdown: getPersonDeadlineBreakdown(p) }))
@@ -107,7 +112,7 @@ export function generateWhatsAppFullSummary(
 
     const paidReservePeople = items.filter((p) => getPersonDeadlineBreakdown(p).isReservePaid);
     if (paidReservePeople.length > 0) {
-      msg += `\n🟢 *RESERVA QUITADA (10/09):*\n`;
+      msg += `\n🟢 *RESERVA QUITADA (${paidReservePeople.length} pessoas):*\n`;
       paidReservePeople.forEach((p) => {
         msg += `✅ *${p.name}* (OK)\n`;
       });
@@ -119,20 +124,27 @@ export function generateWhatsAppFullSummary(
   }
 
   // Full / All deadlines
-  let message = `📋 *RESUMO FINANCEIRO POR PRAZO DE PAGAMENTO*\n\n`;
-  message += `📌 *1ª PARCELA: RESERVA (Vencimento: 10/09)*\n`;
-  message += `• Meta da Reserva: ${formatCurrency(totalEsperadoReserva)}\n`;
-  message += `• Já Pago da Reserva: ${formatCurrency(totalPagoReserva)}\n`;
-  message += `• *FALTA ARRECADAR (até 10/09): ${formatCurrency(totalPendenteReserva)}*\n\n`;
+  let message = `📋 *RESUMO FINANCEIRO DA CHÁCARA*\n\n`;
+  message += `📌 *1ª ETAPA: RESERVA (R$ 2.500,00 - QUITADA COM O IMÓVEL!)*\n`;
+  message += `• Valor da Reserva: ${formatCurrency(totalEsperadoReserva)}\n`;
+  message += `• Status: ✅ 100% Paga ao proprietário (R$ 500 adiantamento + R$ 2.000 quitação)\n`;
+  message += `• Já Pago pelos participantes: ${formatCurrency(totalPagoReserva)}\n`;
+  if (totalPendenteReserva > 0) {
+    message += `• *Pendente entre participantes: ${formatCurrency(totalPendenteReserva)}*\n\n`;
+  } else {
+    message += `• *Pendente da Reserva: R$ 0,00 (100% Coberta)*\n\n`;
+  }
 
-  message += `📌 *2ª PARCELA: ALIMENTAÇÃO (Vencimento: 07/10)*\n`;
-  message += `• Total da Alimentação: ${formatCurrency(totalEsperadoAlimentacao)}\n`;
-  message += `• Já Pago da Alimentação: ${formatCurrency(totalPagoAlimentacao)}\n`;
+  message += `📌 *2ª ETAPA: ALIMENTAÇÃO (Vencimento: 07/10)*\n`;
+  message += `• Total Previsto Alimentação: ${formatCurrency(totalEsperadoAlimentacao)}\n`;
+  message += `• Já Adiantado Alimentação: ${formatCurrency(totalPagoAlimentacao)}\n`;
   message += `• *Falta Arrecadar (até 07/10): ${formatCurrency(totalPendenteAlimentacao)}*\n\n`;
 
-  message += `💳 *SALDO EM CONTA & GASTOS:*\n`;
-  message += `• Total Arrecadado: ${formatCurrency(totalPagoGeral)}\n`;
-  message += `• (-) Adiantamento Pago da Reserva: ${formatCurrency(ADVANCE_RESERVE_EXPENSE)}\n`;
+  message += `💳 *FLUXO DE CAIXA & SALDO EM CONTA:*\n`;
+  message += `• Adiantamento Pago reserva: -${formatCurrency(ADVANCE_RESERVE_EXPENSE)}\n`;
+  message += `• Quitação reserva: -${formatCurrency(SETTLEMENT_RESERVE_EXPENSE)}\n`;
+  message += `• Total de Gastos: -${formatCurrency(totalGastosReserva)}\n`;
+  message += `• Valores Arrecadados: ${formatCurrency(totalPagoGeral)}\n`;
   message += `• 👉 *SALDO ATUAL EM CONTA: ${formatCurrency(saldoEmConta)}*\n\n`;
 
   message += `━━━━━━━━━━━━━━━━━━━━━\n`;
