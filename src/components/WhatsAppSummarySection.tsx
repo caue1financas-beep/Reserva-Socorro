@@ -1,7 +1,16 @@
 import React, { useState } from 'react';
 import { Copy, Check, MessageSquareText, Calendar, Building2, FileText, QrCode, Key } from 'lucide-react';
 import { PersonDebt } from '../types';
-import { generateWhatsAppFullSummary, getPixFormattedBlock, PIX_CONFIG } from '../utils/formatters';
+import {
+  generateWhatsAppFullSummary,
+  getPixFormattedBlock,
+  PIX_CONFIG,
+  ADVANCE_RESERVE_EXPENSE,
+  SETTLEMENT_RESERVE_EXPENSE,
+  TOTAL_RESERVE_EXPENSES,
+  formatCurrency,
+  getPersonDeadlineBreakdown,
+} from '../utils/formatters';
 
 interface WhatsAppSummarySectionProps {
   data: PersonDebt[];
@@ -10,31 +19,48 @@ interface WhatsAppSummarySectionProps {
 export const WhatsAppSummarySection: React.FC<WhatsAppSummarySectionProps> = ({ data }) => {
   const [copiedMode, setCopiedMode] = useState<string | null>(null);
   const [copiedPix, setCopiedPix] = useState(false);
-  const [activeTab, setActiveTab] = useState<'all' | 'reserve_only' | 'compact'>('all');
+  const [activeTab, setActiveTab] = useState<'all' | 'reserve_only' | 'compact'>('compact');
 
   const pendingList = data.filter((p) => p.pendingAmount > 0);
   const totalPendente = data.reduce((acc, curr) => acc + curr.pendingAmount, 0);
   const totalArrecadado = data.reduce((acc, curr) => acc + curr.paidAmount, 0);
 
-  // Formatações de mensagens
+  // Formatação da Lista Direta / Prestação de Contas
   const generateCompactList = () => {
-    const totalGastos = 500;
-    const saldoEmConta = totalArrecadado - totalGastos;
+    const totalGastos = TOTAL_RESERVE_EXPENSES; // R$ 2.500,00
+    const saldoEmConta = totalArrecadado - totalGastos; // R$ 215,00
 
-    let msg = `🔴 *VALORES PENDENTES - RESERVA & ALIMENTAÇÃO*\n\n`;
-    msg += `💰 *Total Arrecadado (Pix):* R$ ${totalArrecadado.toLocaleString('pt-BR')},00\n`;
-    msg += `💳 *Adiantamento Pago Reserva:* -R$ 500,00\n`;
-    msg += `💵 *Saldo Atual em Conta:* R$ ${saldoEmConta.toLocaleString('pt-BR')},00\n`;
-    msg += `⚠️ *Total Geral a Receber:* R$ ${totalPendente.toLocaleString('pt-BR')},00\n\n`;
+    let msg = `🔴 *PRESTAÇÃO DE CONTAS & VALORES PENDENTES*\n\n`;
+    msg += `🏨 *1. RESERVA DA CHÁCARA (100% QUITADA COM O IMÓVEL!)*\n`;
+    msg += `• Adiantamento pago reserva: -${formatCurrency(ADVANCE_RESERVE_EXPENSE)}\n`;
+    msg += `• Quitação da reserva: -${formatCurrency(SETTLEMENT_RESERVE_EXPENSE)}\n`;
+    msg += `• Total de gastos da reserva: -${formatCurrency(totalGastos)} (Pago ao proprietário!)\n\n`;
+
+    msg += `💵 *2. FLUXO DE CAIXA ATUAL:*\n`;
+    msg += `• Total Arrecadado (Pix recebido): ${formatCurrency(totalArrecadado)}\n`;
+    msg += `• (-) Gastos da Reserva: -${formatCurrency(totalGastos)}\n`;
+    msg += `• 👉 *SALDO ATUAL EM CONTA:* *${formatCurrency(saldoEmConta)}* (já reservado para alimentação)\n`;
+    msg += `• Total geral a receber: ${formatCurrency(totalPendente)}\n\n`;
+
     msg += `━━━━━━━━━━━━━━━━━━━━━\n`;
-    msg += `*LISTA DE PENDÊNCIAS POR PESSOA:*\n\n`;
+    msg += `👥 *3. DETALHAMENTO DE CADA PARTICIPANTE:*\n`;
+    msg += `_(Quanto cada um pagou e quanto ainda falta)_\n\n`;
 
-    const sorted = [...data]
-      .filter((p) => p.pendingAmount > 0)
-      .sort((a, b) => b.pendingAmount - a.pendingAmount);
+    const sorted = [...data].sort((a, b) => b.pendingAmount - a.pendingAmount);
 
     sorted.forEach((p, idx) => {
-      msg += `${idx + 1}. *${p.name}*: Falta *R$ ${p.pendingAmount},00* (Pago: R$ ${p.paidAmount},00)\n`;
+      const b = getPersonDeadlineBreakdown(p);
+      if (p.pendingAmount === 0) {
+        msg += `${idx + 1}. 🟢 *${p.name}*: ✅ *QUITADO!* (Pagou: ${formatCurrency(p.paidAmount)})\n`;
+      } else {
+        let detalhePendente = '';
+        if (b.pendingReserve > 0) {
+          detalhePendente = `[Falta Reserva: ${formatCurrency(b.pendingReserve)} | Falta Alim: ${formatCurrency(b.pendingFood)}]`;
+        } else {
+          detalhePendente = `[Reserva OK ✅ | Falta Alim 07/10: ${formatCurrency(b.pendingFood)}]`;
+        }
+        msg += `${idx + 1}. 🔴 *${p.name}*:\n   • Já Pagou: *${formatCurrency(p.paidAmount)}*\n   • Falta Pagar: *${formatCurrency(p.pendingAmount)}* ${detalhePendente}\n`;
+      }
     });
 
     msg += `\n` + getPixFormattedBlock();

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { X, Copy, Check, Share2, FileText, Calendar, Building2, QrCode, Key } from 'lucide-react';
 import { PersonDebt } from '../types';
-import { generateWhatsAppFullSummary, PIX_CONFIG } from '../utils/formatters';
+import { generateWhatsAppFullSummary, generateDirectStatementList, PIX_CONFIG } from '../utils/formatters';
 
 interface ShareSummaryModalProps {
   isOpen: boolean;
@@ -12,11 +12,14 @@ interface ShareSummaryModalProps {
 export const ShareSummaryModal: React.FC<ShareSummaryModalProps> = ({ isOpen, onClose, data }) => {
   if (!isOpen) return null;
 
-  const [activeMode, setActiveMode] = useState<'all_deadlines' | 'reserve_focus'>('all_deadlines');
+  const [activeMode, setActiveMode] = useState<'all_deadlines' | 'compact' | 'reserve_focus'>('compact');
   const [copied, setCopied] = useState(false);
   const [copiedPix, setCopiedPix] = useState(false);
 
-  const summaryText = generateWhatsAppFullSummary(data, activeMode);
+  const summaryText =
+    activeMode === 'compact'
+      ? generateDirectStatementList(data)
+      : generateWhatsAppFullSummary(data, activeMode);
 
   const handleCopy = async () => {
     try {
@@ -66,7 +69,18 @@ export const ShareSummaryModal: React.FC<ShareSummaryModalProps> = ({ isOpen, on
         </div>
 
         {/* Tab Selection */}
-        <div className="px-5 pt-3 border-b border-slate-200 bg-slate-50/50 flex gap-2">
+        <div className="px-5 pt-3 border-b border-slate-200 bg-slate-50/50 flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => setActiveMode('compact')}
+            className={`pb-2.5 px-3 text-xs font-bold border-b-2 transition flex items-center gap-1.5 ${
+              activeMode === 'compact'
+                ? 'border-slate-900 text-slate-900'
+                : 'border-transparent text-slate-500 hover:text-slate-800'
+            }`}
+          >
+            <FileText className="w-3.5 h-3.5" /> Lista Direta / Prestação de Contas
+          </button>
           <button
             type="button"
             onClick={() => setActiveMode('all_deadlines')}
@@ -76,7 +90,7 @@ export const ShareSummaryModal: React.FC<ShareSummaryModalProps> = ({ isOpen, on
                 : 'border-transparent text-slate-500 hover:text-slate-800'
             }`}
           >
-            <Calendar className="w-3.5 h-3.5 text-emerald-600" /> Completo (10/09 e 07/10)
+            <Calendar className="w-3.5 h-3.5 text-emerald-600" /> Detalhado (10/09 e 07/10)
           </button>
           <button
             type="button"
@@ -87,7 +101,7 @@ export const ShareSummaryModal: React.FC<ShareSummaryModalProps> = ({ isOpen, on
                 : 'border-transparent text-slate-500 hover:text-slate-800'
             }`}
           >
-            <Building2 className="w-3.5 h-3.5 text-amber-600" /> Foco 1ª Parcela: Reserva (10/09)
+            <Building2 className="w-3.5 h-3.5 text-amber-600" /> Foco Reserva (10/09)
           </button>
         </div>
 

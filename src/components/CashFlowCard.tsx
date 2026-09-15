@@ -17,9 +17,9 @@ export const CashFlowCard: React.FC<CashFlowCardProps> = ({ data }) => {
   const [isExpanded, setIsExpanded] = useState(true);
 
   // Cálculos financeiros reais baseados na planilha
-  const totalArrecadado = data.reduce((acc, curr) => acc + curr.paidAmount, 0); // R$ 2.624,00
+  const totalArrecadado = data.reduce((acc, curr) => acc + curr.paidAmount, 0); // R$ 2.715,00
   const totalGastos = TOTAL_RESERVE_EXPENSES; // R$ 2.500,00 (Adiantamento R$ 500 + Quitação R$ 2.000)
-  const saldoEmConta = totalArrecadado - totalGastos; // R$ 124,00
+  const saldoEmConta = totalArrecadado - totalGastos; // R$ 215,00
 
   const totalAdultos = data.filter((p) => p.category === 'adulto').length;
 

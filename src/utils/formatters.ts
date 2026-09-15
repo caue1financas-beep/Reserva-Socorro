@@ -218,3 +218,45 @@ export function generateIndividualMessage(person: PersonDebt): string {
   return msg;
 }
 
+export function generateDirectStatementList(items: PersonDebt[]): string {
+  const totalArrecadado = items.reduce((acc, curr) => acc + curr.paidAmount, 0);
+  const totalPendente = items.reduce((acc, curr) => acc + curr.pendingAmount, 0);
+  const totalGastos = TOTAL_RESERVE_EXPENSES; // R$ 2.500,00
+  const saldoEmConta = totalArrecadado - totalGastos; // R$ 124,00
+
+  let msg = `🔴 *PRESTAÇÃO DE CONTAS & VALORES PENDENTES*\n\n`;
+  msg += `🏨 *1. RESERVA DA CHÁCARA (100% QUITADA COM O IMÓVEL!)*\n`;
+  msg += `• Adiantamento pago reserva: -${formatCurrency(ADVANCE_RESERVE_EXPENSE)}\n`;
+  msg += `• Quitação da reserva: -${formatCurrency(SETTLEMENT_RESERVE_EXPENSE)}\n`;
+  msg += `• Total de gastos da reserva: -${formatCurrency(totalGastos)} (Quitado com o proprietário!)\n\n`;
+
+  msg += `💵 *2. FLUXO DE CAIXA ATUAL:*\n`;
+  msg += `• Total Arrecadado (Pix recebido): ${formatCurrency(totalArrecadado)}\n`;
+  msg += `• (-) Gastos da Reserva pagos: -${formatCurrency(totalGastos)}\n`;
+  msg += `• 👉 *SALDO ATUAL EM CONTA:* *${formatCurrency(saldoEmConta)}* (já reservado para alimentação)\n`;
+  msg += `• Total geral a receber: ${formatCurrency(totalPendente)}\n\n`;
+
+  msg += `━━━━━━━━━━━━━━━━━━━━━\n`;
+  msg += `👥 *3. QUANTO CADA UM JÁ PAGOU E QUANTO FALTA:*\n\n`;
+
+  const sorted = [...items].sort((a, b) => b.pendingAmount - a.pendingAmount);
+
+  sorted.forEach((p, idx) => {
+    const b = getPersonDeadlineBreakdown(p);
+    if (p.pendingAmount === 0) {
+      msg += `${idx + 1}. 🟢 *${p.name}*: ✅ *100% QUITADO!* (Já pagou: ${formatCurrency(p.paidAmount)})\n`;
+    } else {
+      let detalhe = '';
+      if (b.pendingReserve > 0) {
+        detalhe = `⚠️ Falta Reserva: ${formatCurrency(b.pendingReserve)} | Falta Alim: ${formatCurrency(b.pendingFood)}`;
+      } else {
+        detalhe = `Reserva OK ✅ | Falta Alim (07/10): ${formatCurrency(b.pendingFood)}`;
+      }
+      msg += `${idx + 1}. 🔴 *${p.name}*:\n   • Já Pagou: *${formatCurrency(p.paidAmount)}*\n   • Falta Pagar: *${formatCurrency(p.pendingAmount)}* (${detalhe})\n`;
+    }
+  });
+
+  msg += `\n` + getPixFormattedBlock();
+  return msg;
+}
+
