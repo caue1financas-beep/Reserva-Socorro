@@ -1,15 +1,13 @@
 import React, { useState } from 'react';
-import { Copy, Check, MessageSquareText, Calendar, Building2, FileText, QrCode, Key } from 'lucide-react';
+import { Copy, Check, MessageSquareText, Calendar, Building2, FileText, QrCode, Key, CheckCircle2 } from 'lucide-react';
 import { PersonDebt } from '../types';
 import {
   generateWhatsAppFullSummary,
+  generateDirectStatementList,
+  generatePaidOnlySummary,
   getPixFormattedBlock,
   PIX_CONFIG,
-  ADVANCE_RESERVE_EXPENSE,
-  SETTLEMENT_RESERVE_EXPENSE,
-  TOTAL_RESERVE_EXPENSES,
   formatCurrency,
-  getPersonDeadlineBreakdown,
 } from '../utils/formatters';
 
 interface WhatsAppSummarySectionProps {
@@ -19,56 +17,15 @@ interface WhatsAppSummarySectionProps {
 export const WhatsAppSummarySection: React.FC<WhatsAppSummarySectionProps> = ({ data }) => {
   const [copiedMode, setCopiedMode] = useState<string | null>(null);
   const [copiedPix, setCopiedPix] = useState(false);
-  const [activeTab, setActiveTab] = useState<'all' | 'reserve_only' | 'compact'>('compact');
+  const [activeTab, setActiveTab] = useState<'compact' | 'paid_only' | 'all' | 'reserve_only'>('compact');
 
   const pendingList = data.filter((p) => p.pendingAmount > 0);
+  const fullyPaidList = data.filter((p) => !p.name.includes('Vaga') && p.pendingAmount === 0);
   const totalPendente = data.reduce((acc, curr) => acc + curr.pendingAmount, 0);
-  const totalArrecadado = data.reduce((acc, curr) => acc + curr.paidAmount, 0);
-
-  // Formatação da Lista Direta / Prestação de Contas
-  const generateCompactList = () => {
-    const totalGastos = TOTAL_RESERVE_EXPENSES; // R$ 2.500,00
-    const saldoEmConta = totalArrecadado - totalGastos; // R$ 215,00
-
-    let msg = `🔴 *PRESTAÇÃO DE CONTAS & VALORES PENDENTES*\n\n`;
-    msg += `🏨 *1. RESERVA DA CHÁCARA (100% QUITADA COM O IMÓVEL!)*\n`;
-    msg += `• Adiantamento pago reserva: -${formatCurrency(ADVANCE_RESERVE_EXPENSE)}\n`;
-    msg += `• Quitação da reserva: -${formatCurrency(SETTLEMENT_RESERVE_EXPENSE)}\n`;
-    msg += `• Total de gastos da reserva: -${formatCurrency(totalGastos)} (Pago ao proprietário!)\n\n`;
-
-    msg += `💵 *2. FLUXO DE CAIXA ATUAL:*\n`;
-    msg += `• Total Arrecadado (Pix recebido): ${formatCurrency(totalArrecadado)}\n`;
-    msg += `• (-) Gastos da Reserva: -${formatCurrency(totalGastos)}\n`;
-    msg += `• 👉 *SALDO ATUAL EM CONTA:* *${formatCurrency(saldoEmConta)}* (já reservado para alimentação)\n`;
-    msg += `• Total geral a receber: ${formatCurrency(totalPendente)}\n\n`;
-
-    msg += `━━━━━━━━━━━━━━━━━━━━━\n`;
-    msg += `👥 *3. DETALHAMENTO DE CADA PARTICIPANTE:*\n`;
-    msg += `_(Quanto cada um pagou e quanto ainda falta)_\n\n`;
-
-    const sorted = [...data].sort((a, b) => b.pendingAmount - a.pendingAmount);
-
-    sorted.forEach((p, idx) => {
-      const b = getPersonDeadlineBreakdown(p);
-      if (p.pendingAmount === 0) {
-        msg += `${idx + 1}. 🟢 *${p.name}*: ✅ *QUITADO!* (Pagou: ${formatCurrency(p.paidAmount)})\n`;
-      } else {
-        let detalhePendente = '';
-        if (b.pendingReserve > 0) {
-          detalhePendente = `[Falta Reserva: ${formatCurrency(b.pendingReserve)} | Falta Alim: ${formatCurrency(b.pendingFood)}]`;
-        } else {
-          detalhePendente = `[Reserva OK ✅ | Falta Alim 07/10: ${formatCurrency(b.pendingFood)}]`;
-        }
-        msg += `${idx + 1}. 🔴 *${p.name}*:\n   • Já Pagou: *${formatCurrency(p.paidAmount)}*\n   • Falta Pagar: *${formatCurrency(p.pendingAmount)}* ${detalhePendente}\n`;
-      }
-    });
-
-    msg += `\n` + getPixFormattedBlock();
-    return msg;
-  };
 
   const getMessageText = () => {
-    if (activeTab === 'compact') return generateCompactList();
+    if (activeTab === 'compact') return generateDirectStatementList(data);
+    if (activeTab === 'paid_only') return generatePaidOnlySummary(data);
     if (activeTab === 'reserve_only') return generateWhatsAppFullSummary(data, 'reserve_focus');
     return generateWhatsAppFullSummary(data, 'all_deadlines');
   };
@@ -111,7 +68,7 @@ export const WhatsAppSummarySection: React.FC<WhatsAppSummarySectionProps> = ({ 
               </span>
             </h3>
             <p className="text-xs text-slate-500">
-              {pendingList.length} pessoas com pendências (Total de R$ {totalPendente.toLocaleString('pt-BR')},00)
+              {pendingList.length} pessoas com pendências (Total de R$ {totalPendente.toLocaleString('pt-BR')},00) • {fullyPaidList.length} pessoas 100% quitadas
             </p>
           </div>
         </div>
@@ -202,6 +159,33 @@ export const WhatsAppSummarySection: React.FC<WhatsAppSummarySectionProps> = ({ 
       <div className="flex flex-wrap gap-2 pt-1 pb-1 text-xs">
         <button
           type="button"
+          id="tab-whatsapp-compact"
+          onClick={() => setActiveTab('compact')}
+          className={`px-3 py-1.5 rounded-lg font-semibold transition flex items-center gap-1.5 ${
+            activeTab === 'compact'
+              ? 'bg-slate-900 text-white border border-slate-900 shadow-xs'
+              : 'text-slate-600 hover:text-slate-900 bg-slate-50 border border-slate-200'
+          }`}
+        >
+          <FileText className="w-3.5 h-3.5" /> Quem Falta Pagar (Pendências)
+        </button>
+
+        <button
+          type="button"
+          id="tab-whatsapp-paid-only"
+          onClick={() => setActiveTab('paid_only')}
+          className={`px-3 py-1.5 rounded-lg font-semibold transition flex items-center gap-1.5 ${
+            activeTab === 'paid_only'
+              ? 'bg-emerald-600 text-white border border-emerald-600 shadow-xs'
+              : 'text-slate-600 hover:text-slate-900 bg-slate-50 border border-slate-200'
+          }`}
+        >
+          <CheckCircle2 className={`w-3.5 h-3.5 ${activeTab === 'paid_only' ? 'text-white' : 'text-emerald-600'}`} /> 100% Quitados ({fullyPaidList.length})
+        </button>
+
+        <button
+          type="button"
+          id="tab-whatsapp-all"
           onClick={() => setActiveTab('all')}
           className={`px-3 py-1.5 rounded-lg font-semibold transition flex items-center gap-1.5 ${
             activeTab === 'all'
@@ -214,18 +198,7 @@ export const WhatsAppSummarySection: React.FC<WhatsAppSummarySectionProps> = ({ 
 
         <button
           type="button"
-          onClick={() => setActiveTab('compact')}
-          className={`px-3 py-1.5 rounded-lg font-semibold transition flex items-center gap-1.5 ${
-            activeTab === 'compact'
-              ? 'bg-slate-900 text-white border border-slate-900 shadow-xs'
-              : 'text-slate-600 hover:text-slate-900 bg-slate-50 border border-slate-200'
-          }`}
-        >
-          <FileText className="w-3.5 h-3.5" /> Lista Direta (Nome + Falta Pagar)
-        </button>
-
-        <button
-          type="button"
+          id="tab-whatsapp-reserve-only"
           onClick={() => setActiveTab('reserve_only')}
           className={`px-3 py-1.5 rounded-lg font-semibold transition flex items-center gap-1.5 ${
             activeTab === 'reserve_only'

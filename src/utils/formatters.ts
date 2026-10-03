@@ -85,6 +85,8 @@ export function generateWhatsAppFullSummary(
   const totalGastosReserva = TOTAL_RESERVE_EXPENSES; // R$ 2.500,00 (Adiantamento R$ 500 + Quitação R$ 2.000)
   const saldoEmConta = totalPagoGeral - totalGastosReserva;
 
+  const isVacant = (name: string) => name.toLowerCase().includes('vaga') || name.toLowerCase().includes('disponível');
+
   if (mode === 'reserve_focus') {
     let msg = `📅 *STATUS DA RESERVA: 100% QUITADA COM O IMÓVEL*\n\n`;
     msg += `🏨 *Custo Total da Reserva:* ${formatCurrency(totalEsperadoReserva)}\n`;
@@ -104,13 +106,21 @@ export function generateWhatsAppFullSummary(
       .filter((item) => item.breakdown.pendingReserve > 0)
       .sort((a, b) => b.breakdown.pendingReserve - a.breakdown.pendingReserve);
 
-    pendingReservePeople.forEach((item, idx) => {
+    const confirmedReservePending = pendingReservePeople.filter((item) => !isVacant(item.person.name));
+    const vacantReserve = pendingReservePeople.filter((item) => isVacant(item.person.name));
+
+    confirmedReservePending.forEach((item, idx) => {
       const p = item.person;
       const b = item.breakdown;
       msg += `${idx + 1}. 🔴 *${p.name}*: Falta *${formatCurrency(b.pendingReserve)}* (Pago: ${formatCurrency(b.paidForReserve)})\n`;
     });
 
-    const paidReservePeople = items.filter((p) => getPersonDeadlineBreakdown(p).isReservePaid);
+    if (vacantReserve.length > 0) {
+      msg += `\n🏕️ *VAGAS EM ABERTO NA CHÁCARA (${vacantReserve.length} vagas de adulto)*: R$ ${vacantReserve[0].person.expectedReserve},00 cada na reserva\n`;
+    }
+
+    const paidReservePeople = items
+      .filter((p) => !isVacant(p.name) && getPersonDeadlineBreakdown(p).isReservePaid);
     if (paidReservePeople.length > 0) {
       msg += `\n🟢 *RESERVA QUITADA (${paidReservePeople.length} pessoas):*\n`;
       paidReservePeople.forEach((p) => {
@@ -151,8 +161,10 @@ export function generateWhatsAppFullSummary(
   message += `🔴 *DETALHAMENTO POR PESSOA:*\n\n`;
 
   const sortedList = [...items].sort((a, b) => b.pendingAmount - a.pendingAmount);
+  const confirmedList = sortedList.filter((p) => !isVacant(p.name));
+  const vacantList = sortedList.filter((p) => isVacant(p.name));
 
-  sortedList.forEach((person, idx) => {
+  confirmedList.forEach((person, idx) => {
     const b = getPersonDeadlineBreakdown(person);
     const statusIcon = person.pendingAmount === 0 ? '🟢' : b.pendingReserve > 0 ? '🔴' : '🟡';
 
@@ -175,6 +187,11 @@ export function generateWhatsAppFullSummary(
 
     message += `   👉 *Falta Total:* *${formatCurrency(person.pendingAmount)}* (Já pago: ${formatCurrency(person.paidAmount)})\n\n`;
   });
+
+  if (vacantList.length > 0) {
+    message += `🏕️ *VAGAS EM ABERTO NA CHÁCARA (${vacantList.length} vagas de adulto):*\n`;
+    message += `• Temos ${vacantList.length} vagas de adulto disponíveis a ${formatCurrency(vacantList[0].totalExpected)} cada (${formatCurrency(vacantList[0].expectedReserve)} reserva + ${formatCurrency(vacantList[0].expectedFood)} alimentação).\n\n`;
+  }
 
   message += getPixFormattedBlock();
   return message;
@@ -222,7 +239,7 @@ export function generateDirectStatementList(items: PersonDebt[]): string {
   const totalArrecadado = items.reduce((acc, curr) => acc + curr.paidAmount, 0);
   const totalPendente = items.reduce((acc, curr) => acc + curr.pendingAmount, 0);
   const totalGastos = TOTAL_RESERVE_EXPENSES; // R$ 2.500,00
-  const saldoEmConta = totalArrecadado - totalGastos; // R$ 124,00
+  const saldoEmConta = totalArrecadado - totalGastos;
 
   let msg = `🔴 *PRESTAÇÃO DE CONTAS & VALORES PENDENTES*\n\n`;
   msg += `🏨 *1. RESERVA DA CHÁCARA (100% QUITADA COM O IMÓVEL!)*\n`;
@@ -237,26 +254,56 @@ export function generateDirectStatementList(items: PersonDebt[]): string {
   msg += `• Total geral a receber: ${formatCurrency(totalPendente)}\n\n`;
 
   msg += `━━━━━━━━━━━━━━━━━━━━━\n`;
-  msg += `👥 *3. QUANTO CADA UM JÁ PAGOU E QUANTO FALTA:*\n\n`;
+  msg += `👥 *3. PARTICIPANTES COM VALORES A PAGAR:*\n\n`;
 
   const sorted = [...items].sort((a, b) => b.pendingAmount - a.pendingAmount);
+  const isVacant = (name: string) => name.toLowerCase().includes('vaga') || name.toLowerCase().includes('disponível');
+  const confirmedPending = sorted.filter((p) => !isVacant(p.name) && p.pendingAmount > 0);
+  const vacant = sorted.filter((p) => isVacant(p.name));
 
-  sorted.forEach((p, idx) => {
+  confirmedPending.forEach((p, idx) => {
     const b = getPersonDeadlineBreakdown(p);
-    if (p.pendingAmount === 0) {
-      msg += `${idx + 1}. 🟢 *${p.name}*: ✅ *100% QUITADO!* (Já pagou: ${formatCurrency(p.paidAmount)})\n`;
+    let detalhe = '';
+    if (b.pendingReserve > 0) {
+      detalhe = `⚠️ Falta Reserva: ${formatCurrency(b.pendingReserve)} | Falta Alim: ${formatCurrency(b.pendingFood)}`;
     } else {
-      let detalhe = '';
-      if (b.pendingReserve > 0) {
-        detalhe = `⚠️ Falta Reserva: ${formatCurrency(b.pendingReserve)} | Falta Alim: ${formatCurrency(b.pendingFood)}`;
-      } else {
-        detalhe = `Reserva OK ✅ | Falta Alim (07/10): ${formatCurrency(b.pendingFood)}`;
-      }
-      msg += `${idx + 1}. 🔴 *${p.name}*:\n   • Já Pagou: *${formatCurrency(p.paidAmount)}*\n   • Falta Pagar: *${formatCurrency(p.pendingAmount)}* (${detalhe})\n`;
+      detalhe = `Reserva OK ✅ | Falta Alim (07/10): ${formatCurrency(b.pendingFood)}`;
     }
+    msg += `${idx + 1}. 🔴 *${p.name}*:\n   • Já Pagou: *${formatCurrency(p.paidAmount)}*\n   • Falta Pagar: *${formatCurrency(p.pendingAmount)}* (${detalhe})\n`;
   });
 
+  if (vacant.length > 0) {
+    msg += `\n🏕️ *VAGAS EM ABERTO NA CHÁCARA (${vacant.length} vagas de adulto):*\n`;
+    msg += `• Temos ${vacant.length} vagas em aberto a ${formatCurrency(vacant[0].totalExpected)} cada (${formatCurrency(vacant[0].expectedReserve)} reserva + ${formatCurrency(vacant[0].expectedFood)} alimentação). Se souberem de alguém que queira ir, avisem!\n`;
+  }
+
   msg += `\n` + getPixFormattedBlock();
+  return msg;
+}
+
+export function generatePaidOnlySummary(items: PersonDebt[]): string {
+  const isVacant = (name: string) => name.toLowerCase().includes('vaga') || name.toLowerCase().includes('disponível');
+  const fullyPaid = items
+    .filter((p) => !isVacant(p.name) && p.pendingAmount === 0)
+    .sort((a, b) => b.paidAmount - a.paidAmount);
+
+  const totalPaidByGroup = fullyPaid.reduce((acc, curr) => acc + curr.paidAmount, 0);
+
+  let msg = `🟢 *PARTICIPANTES 100% QUITADOS (CHÁCARA & ALIMENTAÇÃO)*\n\n`;
+  msg += `Agradecemos a todos que já concluíram o pagamento total da viagem! 🎉👏\n\n`;
+  msg += `━━━━━━━━━━━━━━━━━━━━━\n`;
+  msg += `⭐ *LISTA DE QUEM JÁ QUITOU TUDO:*\n\n`;
+
+  fullyPaid.forEach((p, idx) => {
+    msg += `${idx + 1}. ✅ *${p.name}* — Já pagou *${formatCurrency(p.paidAmount)}* (100% Quitado)\n`;
+  });
+
+  msg += `\n━━━━━━━━━━━━━━━━━━━━━\n`;
+  msg += `📊 *Resumo dos Quitados:*\n`;
+  msg += `• Total de pessoas quitadas: *${fullyPaid.length} participantes*\n`;
+  msg += `• Total arrecadado deste grupo: *${formatCurrency(totalPaidByGroup)}*\n`;
+  msg += `• Status: 100% em dia ✅ Sem pendências!\n`;
+
   return msg;
 }
 

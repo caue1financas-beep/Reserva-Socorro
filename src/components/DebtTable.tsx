@@ -250,7 +250,12 @@ export const DebtTable: React.FC<DebtTableProps> = ({ data, onOpenPaymentModal }
                       <div>
                         <div className="font-bold text-slate-900 text-sm flex items-center gap-2">
                           {person.name}
-                          {isFullyPaid && (
+                          {person.name.includes('Vaga') && (
+                            <span className="text-[10px] bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded font-semibold border border-slate-300">
+                              DISPONÍVEL
+                            </span>
+                          )}
+                          {isFullyPaid && !person.name.includes('Vaga') && (
                             <span className="text-[10px] bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded font-bold border border-emerald-300">
                               QUITADO
                             </span>

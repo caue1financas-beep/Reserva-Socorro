@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { X, Copy, Check, Share2, FileText, Calendar, Building2, QrCode, Key } from 'lucide-react';
+import { X, Copy, Check, Share2, FileText, Calendar, Building2, QrCode, Key, CheckCircle2 } from 'lucide-react';
 import { PersonDebt } from '../types';
-import { generateWhatsAppFullSummary, generateDirectStatementList, PIX_CONFIG } from '../utils/formatters';
+import { generateWhatsAppFullSummary, generateDirectStatementList, generatePaidOnlySummary, PIX_CONFIG } from '../utils/formatters';
 
 interface ShareSummaryModalProps {
   isOpen: boolean;
@@ -12,13 +12,17 @@ interface ShareSummaryModalProps {
 export const ShareSummaryModal: React.FC<ShareSummaryModalProps> = ({ isOpen, onClose, data }) => {
   if (!isOpen) return null;
 
-  const [activeMode, setActiveMode] = useState<'all_deadlines' | 'compact' | 'reserve_focus'>('compact');
+  const [activeMode, setActiveMode] = useState<'compact' | 'paid_only' | 'all_deadlines' | 'reserve_focus'>('compact');
   const [copied, setCopied] = useState(false);
   const [copiedPix, setCopiedPix] = useState(false);
+
+  const fullyPaidCount = data.filter((p) => !p.name.includes('Vaga') && p.pendingAmount === 0).length;
 
   const summaryText =
     activeMode === 'compact'
       ? generateDirectStatementList(data)
+      : activeMode === 'paid_only'
+      ? generatePaidOnlySummary(data)
       : generateWhatsAppFullSummary(data, activeMode);
 
   const handleCopy = async () => {
@@ -72,6 +76,7 @@ export const ShareSummaryModal: React.FC<ShareSummaryModalProps> = ({ isOpen, on
         <div className="px-5 pt-3 border-b border-slate-200 bg-slate-50/50 flex flex-wrap gap-2">
           <button
             type="button"
+            id="modal-tab-compact"
             onClick={() => setActiveMode('compact')}
             className={`pb-2.5 px-3 text-xs font-bold border-b-2 transition flex items-center gap-1.5 ${
               activeMode === 'compact'
@@ -79,10 +84,23 @@ export const ShareSummaryModal: React.FC<ShareSummaryModalProps> = ({ isOpen, on
                 : 'border-transparent text-slate-500 hover:text-slate-800'
             }`}
           >
-            <FileText className="w-3.5 h-3.5" /> Lista Direta / Prestação de Contas
+            <FileText className="w-3.5 h-3.5" /> Quem Falta Pagar (Pendências)
           </button>
           <button
             type="button"
+            id="modal-tab-paid-only"
+            onClick={() => setActiveMode('paid_only')}
+            className={`pb-2.5 px-3 text-xs font-bold border-b-2 transition flex items-center gap-1.5 ${
+              activeMode === 'paid_only'
+                ? 'border-emerald-600 text-emerald-800'
+                : 'border-transparent text-slate-500 hover:text-slate-800'
+            }`}
+          >
+            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> 100% Quitados ({fullyPaidCount})
+          </button>
+          <button
+            type="button"
+            id="modal-tab-all-deadlines"
             onClick={() => setActiveMode('all_deadlines')}
             className={`pb-2.5 px-3 text-xs font-bold border-b-2 transition flex items-center gap-1.5 ${
               activeMode === 'all_deadlines'
@@ -94,6 +112,7 @@ export const ShareSummaryModal: React.FC<ShareSummaryModalProps> = ({ isOpen, on
           </button>
           <button
             type="button"
+            id="modal-tab-reserve-focus"
             onClick={() => setActiveMode('reserve_focus')}
             className={`pb-2.5 px-3 text-xs font-bold border-b-2 transition flex items-center gap-1.5 ${
               activeMode === 'reserve_focus'
