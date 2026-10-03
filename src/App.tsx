@@ -10,14 +10,39 @@ import { PaymentModal } from './components/PaymentModal';
 import { ShareSummaryModal } from './components/ShareSummaryModal';
 import { AddPersonModal } from './components/AddPersonModal';
 
-const STORAGE_KEY = 'reserva_debitos_data_v11';
+const STORAGE_KEY = 'reserva_debitos_data_v12';
 
 export default function App() {
   const [data, setData] = useState<PersonDebt[]>(() => {
     try {
-      const saved = localStorage.getItem(STORAGE_KEY);
+      const saved =
+        localStorage.getItem(STORAGE_KEY) ||
+        localStorage.getItem('reserva_debitos_data_v11') ||
+        localStorage.getItem('reserva_debitos_data_v10');
       if (saved) {
-        return JSON.parse(saved);
+        const parsed: PersonDebt[] = JSON.parse(saved);
+        // Exclude vacancies and ensure latest payments for Beatriz and Miriam are applied
+        return parsed
+          .filter((p) => !p.name.toLowerCase().includes('vaga') && !p.name.toLowerCase().includes('disponível'))
+          .map((p) => {
+            if (p.name.toLowerCase() === 'beatriz' && p.paidAmount === 150) {
+              return {
+                ...p,
+                paidAmount: 270,
+                pendingAmount: 38,
+                status: 'parcial' as const,
+              };
+            }
+            if (p.name.toLowerCase() === 'miriam' && p.paidAmount < 308) {
+              return {
+                ...p,
+                paidAmount: 308,
+                pendingAmount: 0,
+                status: 'quitado' as const,
+              };
+            }
+            return p;
+          });
       }
     } catch (e) {
       console.error('Error loading saved debt data', e);

@@ -39,8 +39,11 @@ export const DebtTable: React.FC<DebtTableProps> = ({ data, onOpenPaymentModal }
     }
   };
 
+  const isVacant = (name: string) => name.toLowerCase().includes('vaga') || name.toLowerCase().includes('disponível');
+
   // Filter
   const filteredData = data.filter((person) => {
+    if (isVacant(person.name)) return false;
     const matchesSearch = person.name.toLowerCase().includes(searchTerm.toLowerCase());
     if (!matchesSearch) return false;
 

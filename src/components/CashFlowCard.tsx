@@ -17,11 +17,13 @@ export const CashFlowCard: React.FC<CashFlowCardProps> = ({ data }) => {
   const [isExpanded, setIsExpanded] = useState(true);
 
   // Cálculos financeiros reais baseados na planilha
-  const totalArrecadado = data.reduce((acc, curr) => acc + curr.paidAmount, 0); // R$ 2.835,00
+  const isVacant = (name: string) => name.toLowerCase().includes('vaga') || name.toLowerCase().includes('disponível');
+  const validData = data.filter((p) => !isVacant(p.name));
+  const totalArrecadado = validData.reduce((acc, curr) => acc + curr.paidAmount, 0); // R$ 2.908,00
   const totalGastos = TOTAL_RESERVE_EXPENSES; // R$ 2.500,00 (Adiantamento R$ 500 + Quitação R$ 2.000)
-  const saldoEmConta = totalArrecadado - totalGastos; // R$ 335,00
+  const saldoEmConta = totalArrecadado - totalGastos; // R$ 408,00
 
-  const totalAdultos = data.filter((p) => p.category === 'adulto').length;
+  const totalAdultos = validData.filter((p) => p.category === 'adulto').length;
 
   return (
     <div
@@ -138,7 +140,7 @@ export const CashFlowCard: React.FC<CashFlowCardProps> = ({ data }) => {
                   <div>
                     <span className="font-bold">Rateio por pessoa</span>
                     <p className="text-[11px] text-slate-800 font-normal">
-                      {totalAdultos} adultos a R$ 188,00 na reserva ({formatCurrency(totalAdultos * 188)}) + R$ 120,00 na alimentação
+                      {totalAdultos} adultos confirmados a R$ 188,00 na reserva ({formatCurrency(totalAdultos * 188)}) + R$ 120,00 na alimentação
                     </p>
                   </div>
                 </td>

@@ -19,15 +19,17 @@ export const WhatsAppSummarySection: React.FC<WhatsAppSummarySectionProps> = ({ 
   const [copiedPix, setCopiedPix] = useState(false);
   const [activeTab, setActiveTab] = useState<'compact' | 'paid_only' | 'all' | 'reserve_only'>('compact');
 
-  const pendingList = data.filter((p) => p.pendingAmount > 0);
-  const fullyPaidList = data.filter((p) => !p.name.includes('Vaga') && p.pendingAmount === 0);
-  const totalPendente = data.reduce((acc, curr) => acc + curr.pendingAmount, 0);
+  const isVacant = (name: string) => name.toLowerCase().includes('vaga') || name.toLowerCase().includes('disponível');
+  const validData = data.filter((p) => !isVacant(p.name));
+  const pendingList = validData.filter((p) => p.pendingAmount > 0);
+  const fullyPaidList = validData.filter((p) => p.pendingAmount === 0);
+  const totalPendente = validData.reduce((acc, curr) => acc + curr.pendingAmount, 0);
 
   const getMessageText = () => {
-    if (activeTab === 'compact') return generateDirectStatementList(data);
-    if (activeTab === 'paid_only') return generatePaidOnlySummary(data);
-    if (activeTab === 'reserve_only') return generateWhatsAppFullSummary(data, 'reserve_focus');
-    return generateWhatsAppFullSummary(data, 'all_deadlines');
+    if (activeTab === 'compact') return generateDirectStatementList(validData);
+    if (activeTab === 'paid_only') return generatePaidOnlySummary(validData);
+    if (activeTab === 'reserve_only') return generateWhatsAppFullSummary(validData, 'reserve_focus');
+    return generateWhatsAppFullSummary(validData, 'all_deadlines');
   };
 
   const textToDisplay = getMessageText();

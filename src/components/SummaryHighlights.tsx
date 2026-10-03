@@ -9,7 +9,9 @@ interface SummaryHighlightsProps {
 }
 
 export const SummaryHighlights: React.FC<SummaryHighlightsProps> = ({ data, onOpenPaymentModal }) => {
-  const itemsWithBreakdown = data.map((p) => ({
+  const isVacant = (name: string) => name.toLowerCase().includes('vaga') || name.toLowerCase().includes('disponível');
+  const validData = data.filter((p) => !isVacant(p.name));
+  const itemsWithBreakdown = validData.map((p) => ({
     person: p,
     b: getPersonDeadlineBreakdown(p),
   }));

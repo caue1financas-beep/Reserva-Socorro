@@ -16,14 +16,16 @@ export const ShareSummaryModal: React.FC<ShareSummaryModalProps> = ({ isOpen, on
   const [copied, setCopied] = useState(false);
   const [copiedPix, setCopiedPix] = useState(false);
 
-  const fullyPaidCount = data.filter((p) => !p.name.includes('Vaga') && p.pendingAmount === 0).length;
+  const isVacant = (name: string) => name.toLowerCase().includes('vaga') || name.toLowerCase().includes('disponível');
+  const validData = data.filter((p) => !isVacant(p.name));
+  const fullyPaidCount = validData.filter((p) => p.pendingAmount === 0).length;
 
   const summaryText =
     activeMode === 'compact'
-      ? generateDirectStatementList(data)
+      ? generateDirectStatementList(validData)
       : activeMode === 'paid_only'
-      ? generatePaidOnlySummary(data)
-      : generateWhatsAppFullSummary(data, activeMode);
+      ? generatePaidOnlySummary(validData)
+      : generateWhatsAppFullSummary(validData, activeMode);
 
   const handleCopy = async () => {
     try {
