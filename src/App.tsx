@@ -10,39 +10,76 @@ import { PaymentModal } from './components/PaymentModal';
 import { ShareSummaryModal } from './components/ShareSummaryModal';
 import { AddPersonModal } from './components/AddPersonModal';
 
-const STORAGE_KEY = 'reserva_debitos_data_v12';
+const STORAGE_KEY = 'reserva_debitos_data_v13';
 
 export default function App() {
   const [data, setData] = useState<PersonDebt[]>(() => {
     try {
       const saved =
         localStorage.getItem(STORAGE_KEY) ||
+        localStorage.getItem('reserva_debitos_data_v12') ||
         localStorage.getItem('reserva_debitos_data_v11') ||
         localStorage.getItem('reserva_debitos_data_v10');
       if (saved) {
-        const parsed: PersonDebt[] = JSON.parse(saved);
-        // Exclude vacancies and ensure latest payments for Beatriz and Miriam are applied
-        return parsed
-          .filter((p) => !p.name.toLowerCase().includes('vaga') && !p.name.toLowerCase().includes('disponível'))
-          .map((p) => {
-            if (p.name.toLowerCase() === 'beatriz' && p.paidAmount === 150) {
-              return {
-                ...p,
-                paidAmount: 270,
-                pendingAmount: 38,
-                status: 'parcial' as const,
-              };
-            }
-            if (p.name.toLowerCase() === 'miriam' && p.paidAmount < 308) {
-              return {
-                ...p,
-                paidAmount: 308,
-                pendingAmount: 0,
-                status: 'quitado' as const,
-              };
-            }
-            return p;
-          });
+        let parsed: PersonDebt[] = JSON.parse(saved);
+        // Exclude vacancies
+        parsed = parsed.filter(
+          (p) => !p.name.toLowerCase().includes('vaga') && !p.name.toLowerCase().includes('disponível')
+        );
+
+        // Ensure Cleide exists with defined values (56 reserva, 120 refeição, 176 pago, quitada)
+        const cleideIndex = parsed.findIndex((p) => p.name.toLowerCase() === 'cleide');
+        const cleideData: PersonDebt = {
+          id: '14',
+          name: 'Cleide',
+          category: 'adulto',
+          expectedReserve: 56,
+          expectedFood: 120,
+          totalExpected: 176,
+          paidAmount: 176,
+          pendingAmount: 0,
+          status: 'quitado',
+        };
+
+        if (cleideIndex === -1) {
+          const mariIndex = parsed.findIndex((p) => p.name.toLowerCase() === 'mari');
+          if (mariIndex !== -1) {
+            parsed = [...parsed.slice(0, mariIndex + 1), cleideData, ...parsed.slice(mariIndex + 1)];
+          } else {
+            parsed.push(cleideData);
+          }
+        } else {
+          parsed[cleideIndex] = {
+            ...parsed[cleideIndex],
+            expectedReserve: 56,
+            expectedFood: 120,
+            totalExpected: 176,
+            paidAmount: 176,
+            pendingAmount: 0,
+            status: 'quitado',
+          };
+        }
+
+        // Ensure latest payments for Beatriz and Miriam are applied
+        return parsed.map((p) => {
+          if (p.name.toLowerCase() === 'beatriz' && p.paidAmount === 150) {
+            return {
+              ...p,
+              paidAmount: 270,
+              pendingAmount: 38,
+              status: 'parcial' as const,
+            };
+          }
+          if (p.name.toLowerCase() === 'miriam' && p.paidAmount < 308) {
+            return {
+              ...p,
+              paidAmount: 308,
+              pendingAmount: 0,
+              status: 'quitado' as const,
+            };
+          }
+          return p;
+        });
       }
     } catch (e) {
       console.error('Error loading saved debt data', e);

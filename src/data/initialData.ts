@@ -145,6 +145,17 @@ export const INITIAL_DEBT_DATA: PersonDebt[] = [
     status: 'quitado',
   },
   {
+    id: '14',
+    name: 'Cleide',
+    category: 'adulto',
+    expectedReserve: 56,
+    expectedFood: 120,
+    totalExpected: 176,
+    paidAmount: 176,
+    pendingAmount: 0,
+    status: 'quitado',
+  },
+  {
     id: '17',
     name: 'Olívia',
     category: 'crianca_outros',
