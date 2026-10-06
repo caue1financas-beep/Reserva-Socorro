@@ -11,6 +11,9 @@ interface SummaryHighlightsProps {
 export const SummaryHighlights: React.FC<SummaryHighlightsProps> = ({ data, onOpenPaymentModal }) => {
   const isVacant = (name: string) => name.toLowerCase().includes('vaga') || name.toLowerCase().includes('disponível');
   const validData = data.filter((p) => !isVacant(p.name));
+  const totalArrecadadoGeral = validData.reduce((acc, curr) => acc + curr.paidAmount, 0);
+  const saldoEmConta = totalArrecadadoGeral - 2500;
+
   const itemsWithBreakdown = validData.map((p) => ({
     person: p,
     b: getPersonDeadlineBreakdown(p),
@@ -129,7 +132,7 @@ export const SummaryHighlights: React.FC<SummaryHighlightsProps> = ({ data, onOp
             </div>
             <div>
               <h4 className="font-bold text-slate-900 text-sm">Reserva Quitada (10/09)</h4>
-              <span className="text-[11px] text-emerald-700 font-medium">1ª Parcela em dia</span>
+              <span className="text-[11px] text-emerald-700 font-medium">1ª Parcela em dia • Saldo: {formatCurrency(saldoEmConta)}</span>
             </div>
           </div>
           <span className="text-[11px] text-emerald-800 font-bold bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">

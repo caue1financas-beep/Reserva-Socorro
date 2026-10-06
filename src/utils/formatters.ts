@@ -265,14 +265,24 @@ export function generateDirectStatementList(items: PersonDebt[]): string {
 
 export function generatePaidOnlySummary(items: PersonDebt[]): string {
   const isVacant = (name: string) => name.toLowerCase().includes('vaga') || name.toLowerCase().includes('disponível');
-  const fullyPaid = items
-    .filter((p) => !isVacant(p.name) && p.pendingAmount === 0)
+  const validItems = items.filter((p) => !isVacant(p.name));
+  const fullyPaid = validItems
+    .filter((p) => p.pendingAmount === 0)
     .sort((a, b) => b.paidAmount - a.paidAmount);
 
   const totalPaidByGroup = fullyPaid.reduce((acc, curr) => acc + curr.paidAmount, 0);
+  const totalArrecadadoGeral = validItems.reduce((acc, curr) => acc + curr.paidAmount, 0);
+  const totalGastosReserva = TOTAL_RESERVE_EXPENSES; // R$ 2.500,00
+  const saldoEmConta = totalArrecadadoGeral - totalGastosReserva;
 
   let msg = `🟢 *PARTICIPANTES 100% QUITADOS (CHÁCARA & ALIMENTAÇÃO)*\n\n`;
   msg += `Agradecemos a todos que já concluíram o pagamento total da viagem! 🎉👏\n\n`;
+
+  msg += `💳 *FLUXO DE CAIXA & SALDO EM CONTA:*\n`;
+  msg += `• Total arrecadado geral: ${formatCurrency(totalArrecadadoGeral)}\n`;
+  msg += `• (-) Gastos da reserva pagos: -${formatCurrency(totalGastosReserva)} (100% Quitado com o imóvel!)\n`;
+  msg += `• 👉 *SALDO ATUAL EM CONTA: ${formatCurrency(saldoEmConta)}* (já livre para alimentação)\n\n`;
+
   msg += `━━━━━━━━━━━━━━━━━━━━━\n`;
   msg += `⭐ *LISTA DE QUEM JÁ QUITOU TUDO:*\n\n`;
 
@@ -284,6 +294,7 @@ export function generatePaidOnlySummary(items: PersonDebt[]): string {
   msg += `📊 *Resumo dos Quitados:*\n`;
   msg += `• Total de pessoas quitadas: *${fullyPaid.length} participantes*\n`;
   msg += `• Total arrecadado deste grupo: *${formatCurrency(totalPaidByGroup)}*\n`;
+  msg += `• 💰 *SALDO ATUAL EM CONTA: ${formatCurrency(saldoEmConta)}*\n`;
   msg += `• Status: 100% em dia ✅ Sem pendências!\n`;
 
   return msg;

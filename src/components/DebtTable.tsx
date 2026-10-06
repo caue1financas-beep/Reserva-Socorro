@@ -40,6 +40,9 @@ export const DebtTable: React.FC<DebtTableProps> = ({ data, onOpenPaymentModal }
   };
 
   const isVacant = (name: string) => name.toLowerCase().includes('vaga') || name.toLowerCase().includes('disponível');
+  const validData = data.filter((p) => !isVacant(p.name));
+  const totalArrecadadoGeral = validData.reduce((acc, curr) => acc + curr.paidAmount, 0);
+  const saldoEmConta = totalArrecadadoGeral - 2500;
 
   // Filter
   const filteredData = data.filter((person) => {
@@ -189,16 +192,32 @@ export const DebtTable: React.FC<DebtTableProps> = ({ data, onOpenPaymentModal }
             type="button"
             id="filter-fully-paid-btn"
             onClick={() => setActiveFilter('fully_paid')}
-            className={`px-3 py-1.5 text-xs rounded-lg font-semibold transition ${
+            className={`px-3 py-1.5 text-xs rounded-lg font-semibold transition flex items-center gap-1.5 ${
               activeFilter === 'fully_paid'
                 ? 'bg-emerald-700 text-white shadow-xs'
                 : 'bg-white text-emerald-900 hover:bg-emerald-50 border border-emerald-300'
             }`}
           >
-            100% Quitado ({data.filter((p) => p.pendingAmount === 0).length})
+            <CheckCircle2 className="w-3 h-3 text-emerald-500" /> 100% Quitado ({validData.filter((p) => p.pendingAmount === 0).length}) • Saldo: {formatCurrency(saldoEmConta)}
           </button>
         </div>
       </div>
+
+      {/* Saldo em Conta banner when 100% Quitado is active */}
+      {activeFilter === 'fully_paid' && (
+        <div id="table-fully-paid-saldo-banner" className="mx-4 sm:mx-5 mt-4 p-3 rounded-xl bg-emerald-50 border border-emerald-300 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+          <div className="flex items-center gap-2 text-emerald-950 font-semibold">
+            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+            <span>
+              Exibindo todos os {filteredData.length} participantes 100% quitados (total arrecadado deste grupo: {formatCurrency(filteredData.reduce((acc, curr) => acc + curr.paidAmount, 0))})
+            </span>
+          </div>
+          <div className="bg-white px-3 py-1 rounded-lg border border-emerald-300 font-bold text-emerald-900 flex items-center gap-1.5 shadow-2xs self-start sm:self-auto">
+            <span className="text-slate-600">Saldo Atual em Conta:</span>
+            <span className="text-emerald-700 font-extrabold text-sm">{formatCurrency(saldoEmConta)}</span>
+          </div>
+        </div>
+      )}
 
       {/* Table for Desktop & Tablet */}
       <div className="overflow-x-auto">

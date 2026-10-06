@@ -24,6 +24,8 @@ export const WhatsAppSummarySection: React.FC<WhatsAppSummarySectionProps> = ({ 
   const pendingList = validData.filter((p) => p.pendingAmount > 0);
   const fullyPaidList = validData.filter((p) => p.pendingAmount === 0);
   const totalPendente = validData.reduce((acc, curr) => acc + curr.pendingAmount, 0);
+  const totalArrecadadoGeral = validData.reduce((acc, curr) => acc + curr.paidAmount, 0);
+  const saldoEmConta = totalArrecadadoGeral - 2500;
 
   const getMessageText = () => {
     if (activeTab === 'compact') return generateDirectStatementList(validData);
@@ -182,7 +184,7 @@ export const WhatsAppSummarySection: React.FC<WhatsAppSummarySectionProps> = ({ 
               : 'text-slate-600 hover:text-slate-900 bg-slate-50 border border-slate-200'
           }`}
         >
-          <CheckCircle2 className={`w-3.5 h-3.5 ${activeTab === 'paid_only' ? 'text-white' : 'text-emerald-600'}`} /> 100% Quitados ({fullyPaidList.length})
+          <CheckCircle2 className={`w-3.5 h-3.5 ${activeTab === 'paid_only' ? 'text-white' : 'text-emerald-600'}`} /> 100% Quitados ({fullyPaidList.length}) • Saldo: {formatCurrency(saldoEmConta)}
         </button>
 
         <button
@@ -211,6 +213,22 @@ export const WhatsAppSummarySection: React.FC<WhatsAppSummarySectionProps> = ({ 
           <Building2 className="w-3.5 h-3.5 text-amber-700" /> Só Reserva (10/09)
         </button>
       </div>
+
+      {/* Saldo em Conta Callout for 100% Quitados */}
+      {activeTab === 'paid_only' && (
+        <div id="paid-only-saldo-banner" className="bg-emerald-50 border border-emerald-300 rounded-xl p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+          <div className="flex items-center gap-2 text-emerald-900 font-medium">
+            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+            <span>
+              <strong>{fullyPaidList.length} participantes 100% quitados</strong> (total arrecadado deste grupo: {formatCurrency(fullyPaidList.reduce((acc, curr) => acc + curr.paidAmount, 0))})
+            </span>
+          </div>
+          <div className="bg-white px-3 py-1 rounded-lg border border-emerald-300 font-bold text-emerald-900 flex items-center gap-2 shadow-2xs self-start sm:self-auto">
+            <span className="text-slate-600">Saldo Atual em Conta:</span>
+            <span className="text-emerald-700 font-extrabold text-sm">{formatCurrency(saldoEmConta)}</span>
+          </div>
+        </div>
+      )}
 
       {/* Message Preview Box */}
       <div className="relative">

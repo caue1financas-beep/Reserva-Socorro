@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { X, Copy, Check, Share2, FileText, Calendar, Building2, QrCode, Key, CheckCircle2 } from 'lucide-react';
 import { PersonDebt } from '../types';
-import { generateWhatsAppFullSummary, generateDirectStatementList, generatePaidOnlySummary, PIX_CONFIG } from '../utils/formatters';
+import { generateWhatsAppFullSummary, generateDirectStatementList, generatePaidOnlySummary, PIX_CONFIG, formatCurrency } from '../utils/formatters';
 
 interface ShareSummaryModalProps {
   isOpen: boolean;
@@ -19,6 +19,8 @@ export const ShareSummaryModal: React.FC<ShareSummaryModalProps> = ({ isOpen, on
   const isVacant = (name: string) => name.toLowerCase().includes('vaga') || name.toLowerCase().includes('disponível');
   const validData = data.filter((p) => !isVacant(p.name));
   const fullyPaidCount = validData.filter((p) => p.pendingAmount === 0).length;
+  const totalArrecadadoGeral = validData.reduce((acc, curr) => acc + curr.paidAmount, 0);
+  const saldoEmConta = totalArrecadadoGeral - 2500;
 
   const summaryText =
     activeMode === 'compact'
@@ -98,7 +100,7 @@ export const ShareSummaryModal: React.FC<ShareSummaryModalProps> = ({ isOpen, on
                 : 'border-transparent text-slate-500 hover:text-slate-800'
             }`}
           >
-            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> 100% Quitados ({fullyPaidCount})
+            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> 100% Quitados ({fullyPaidCount}) • Saldo: {formatCurrency(saldoEmConta)}
           </button>
           <button
             type="button"
@@ -128,6 +130,22 @@ export const ShareSummaryModal: React.FC<ShareSummaryModalProps> = ({ isOpen, on
 
         {/* Body */}
         <div className="p-5 flex-1 overflow-y-auto space-y-3">
+          {/* Callout if paid_only mode */}
+          {activeMode === 'paid_only' && (
+            <div id="modal-paid-only-saldo-banner" className="bg-emerald-50 border border-emerald-300 rounded-xl p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+              <div className="flex items-center gap-2 text-emerald-900 font-medium">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                <span>
+                  <strong>{fullyPaidCount} participantes 100% quitados</strong> (total arrecadado deste grupo: {formatCurrency(validData.filter(p => p.pendingAmount === 0).reduce((acc, curr) => acc + curr.paidAmount, 0))})
+                </span>
+              </div>
+              <div className="bg-white px-3 py-1 rounded-lg border border-emerald-300 font-bold text-emerald-900 flex items-center gap-2 shadow-2xs self-start sm:self-auto">
+                <span className="text-slate-600">Saldo Atual em Conta:</span>
+                <span className="text-emerald-700 font-extrabold text-sm">{formatCurrency(saldoEmConta)}</span>
+              </div>
+            </div>
+          )}
+
           {/* Quick Pix Bar */}
           <div className="bg-emerald-50/70 border border-emerald-200 rounded-xl p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 text-xs">
             <div className="flex items-center gap-2.5">
