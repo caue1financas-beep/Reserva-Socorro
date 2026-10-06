@@ -10,13 +10,15 @@ import { PaymentModal } from './components/PaymentModal';
 import { ShareSummaryModal } from './components/ShareSummaryModal';
 import { AddPersonModal } from './components/AddPersonModal';
 
-const STORAGE_KEY = 'reserva_debitos_data_v13';
+const STORAGE_KEY = 'reserva_debitos_data_v15';
 
 export default function App() {
   const [data, setData] = useState<PersonDebt[]>(() => {
     try {
       const saved =
         localStorage.getItem(STORAGE_KEY) ||
+        localStorage.getItem('reserva_debitos_data_v14') ||
+        localStorage.getItem('reserva_debitos_data_v13') ||
         localStorage.getItem('reserva_debitos_data_v12') ||
         localStorage.getItem('reserva_debitos_data_v11') ||
         localStorage.getItem('reserva_debitos_data_v10');
@@ -55,6 +57,36 @@ export default function App() {
             expectedFood: 120,
             totalExpected: 176,
             paidAmount: 176,
+            pendingAmount: 0,
+            status: 'quitado',
+          };
+        }
+
+        // Ensure Léo exists with defined values (0 reserva, 30 refeição, 30 pago, 0 pendente - 100% quitado)
+        const leoIndex = parsed.findIndex((p) => p.name.toLowerCase() === 'léo' || p.name.toLowerCase() === 'leo');
+        const leoData: PersonDebt = {
+          id: '23',
+          name: 'Léo',
+          category: 'crianca_outros',
+          expectedReserve: 0,
+          expectedFood: 30,
+          totalExpected: 30,
+          paidAmount: 30,
+          pendingAmount: 0,
+          status: 'quitado',
+        };
+
+        if (leoIndex === -1) {
+          parsed.push(leoData);
+        } else {
+          parsed[leoIndex] = {
+            ...parsed[leoIndex],
+            name: 'Léo',
+            category: 'crianca_outros',
+            expectedReserve: 0,
+            expectedFood: 30,
+            totalExpected: 30,
+            paidAmount: 30,
             pendingAmount: 0,
             status: 'quitado',
           };

@@ -221,4 +221,15 @@ export const INITIAL_DEBT_DATA: PersonDebt[] = [
     pendingAmount: 30,
     status: 'pendente_total',
   },
+  {
+    id: '23',
+    name: 'Léo',
+    category: 'crianca_outros',
+    expectedReserve: 0,
+    expectedFood: 30,
+    totalExpected: 30,
+    paidAmount: 30,
+    pendingAmount: 0,
+    status: 'quitado',
+  },
 ];
