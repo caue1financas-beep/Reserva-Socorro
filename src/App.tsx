@@ -10,13 +10,14 @@ import { PaymentModal } from './components/PaymentModal';
 import { ShareSummaryModal } from './components/ShareSummaryModal';
 import { AddPersonModal } from './components/AddPersonModal';
 
-const STORAGE_KEY = 'reserva_debitos_data_v15';
+const STORAGE_KEY = 'reserva_debitos_data_v16';
 
 export default function App() {
   const [data, setData] = useState<PersonDebt[]>(() => {
     try {
       const saved =
         localStorage.getItem(STORAGE_KEY) ||
+        localStorage.getItem('reserva_debitos_data_v15') ||
         localStorage.getItem('reserva_debitos_data_v14') ||
         localStorage.getItem('reserva_debitos_data_v13') ||
         localStorage.getItem('reserva_debitos_data_v12') ||
@@ -92,8 +93,16 @@ export default function App() {
           };
         }
 
-        // Ensure latest payments for Beatriz and Miriam are applied
+        // Ensure latest payments for Beatriz, Miriam and Carol are applied
         return parsed.map((p) => {
+          if (p.name.toLowerCase() === 'carol' && p.paidAmount < 308) {
+            return {
+              ...p,
+              paidAmount: 308,
+              pendingAmount: 0,
+              status: 'quitado' as const,
+            };
+          }
           if (p.name.toLowerCase() === 'beatriz' && p.paidAmount === 150) {
             return {
               ...p,

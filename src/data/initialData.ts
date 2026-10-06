@@ -41,9 +41,9 @@ export const INITIAL_DEBT_DATA: PersonDebt[] = [
     expectedReserve: 188,
     expectedFood: 120,
     totalExpected: 308,
-    paidAmount: 188,
-    pendingAmount: 120,
-    status: 'parcial',
+    paidAmount: 308,
+    pendingAmount: 0,
+    status: 'quitado',
   },
   {
     id: '5',
