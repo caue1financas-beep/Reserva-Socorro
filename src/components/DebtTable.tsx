@@ -13,16 +13,25 @@ import {
   Calendar,
   Building2,
   UtensilsCrossed,
+  Lock,
+  Unlock,
 } from 'lucide-react';
 import { PersonDebt, FilterStatus, SortOption } from '../types';
 import { formatCurrency, generateIndividualMessage, getPersonDeadlineBreakdown } from '../utils/formatters';
 
 interface DebtTableProps {
   data: PersonDebt[];
-  onOpenPaymentModal: (person: PersonDebt) => void;
+  isAuthenticated: boolean;
+  onEditPerson: (person: PersonDebt) => void;
+  onRequireAuth?: (person: PersonDebt) => void;
 }
 
-export const DebtTable: React.FC<DebtTableProps> = ({ data, onOpenPaymentModal }) => {
+export const DebtTable: React.FC<DebtTableProps> = ({
+  data,
+  isAuthenticated,
+  onEditPerson,
+  onRequireAuth,
+}) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeFilter, setActiveFilter] = useState<string>('all');
   const [sortBy, setSortBy] = useState<SortOption>('pending_desc');
@@ -56,7 +65,7 @@ export const DebtTable: React.FC<DebtTableProps> = ({ data, onOpenPaymentModal }
     if (activeFilter === 'pending_reserve_10_09') return breakdown.pendingReserve > 0;
     if (activeFilter === 'paid_reserve_10_09') return breakdown.isReservePaid;
     if (activeFilter === 'pending_food_07_10') return breakdown.pendingFood > 0;
-    if (activeFilter === 'fully_paid') return person.pendingAmount === 0;
+    if (activeFilter === 'fully_paid') return person.pendingAmount <= 0;
     if (activeFilter === 'partial') return person.paidAmount > 0 && person.pendingAmount > 0;
     if (activeFilter === 'unpaid') return person.paidAmount === 0;
     if (activeFilter === 'adult') return person.category === 'adulto';
@@ -198,7 +207,7 @@ export const DebtTable: React.FC<DebtTableProps> = ({ data, onOpenPaymentModal }
                 : 'bg-white text-emerald-900 hover:bg-emerald-50 border border-emerald-300'
             }`}
           >
-            <CheckCircle2 className="w-3 h-3 text-emerald-500" /> 100% Quitado ({validData.filter((p) => p.pendingAmount === 0).length}) • Saldo: {formatCurrency(saldoEmConta)}
+            <CheckCircle2 className="w-3 h-3 text-emerald-500" /> 100% Quitado ({validData.filter((p) => p.pendingAmount <= 0).length})
           </button>
         </div>
       </div>
@@ -213,7 +222,7 @@ export const DebtTable: React.FC<DebtTableProps> = ({ data, onOpenPaymentModal }
             </span>
           </div>
           <div className="bg-white px-3 py-1 rounded-lg border border-emerald-300 font-bold text-emerald-900 flex items-center gap-1.5 shadow-2xs self-start sm:self-auto">
-            <span className="text-slate-600">Saldo Atual em Conta:</span>
+            <span className="text-slate-600">Saldo Atual em Conta Bancária (Caixa):</span>
             <span className="text-emerald-700 font-extrabold text-sm">{formatCurrency(saldoEmConta)}</span>
           </div>
         </div>
@@ -225,6 +234,7 @@ export const DebtTable: React.FC<DebtTableProps> = ({ data, onOpenPaymentModal }
           <thead>
             <tr className="border-b border-slate-200 bg-slate-100/90 text-slate-700 text-xs uppercase font-bold tracking-wider">
               <th className="py-3.5 px-4 sm:px-6">Participante</th>
+              <th className="py-3.5 px-4 text-slate-800">Valor por Pessoa</th>
               <th className="py-3.5 px-4 bg-amber-50/70 border-x border-amber-200/80 text-amber-950">
                 <div className="flex items-center gap-1.5">
                   <Building2 className="w-3.5 h-3.5 text-amber-700" />
@@ -237,15 +247,15 @@ export const DebtTable: React.FC<DebtTableProps> = ({ data, onOpenPaymentModal }
                   <span>2ª Parcela: Alimentação (07/10)</span>
                 </div>
               </th>
-              <th className="py-3.5 px-4 text-emerald-800">Total Pago</th>
-              <th className="py-3.5 px-4 text-rose-800">Falta Geral</th>
+              <th className="py-3.5 px-4 text-emerald-800">Total Já Pago</th>
+              <th className="py-3.5 px-4 text-slate-800">Situação / Saldo Individual</th>
               <th className="py-3.5 px-4 sm:px-6 text-right">Ações</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 text-slate-700">
             {sortedData.map((person) => {
               const b = getPersonDeadlineBreakdown(person);
-              const isFullyPaid = person.pendingAmount === 0;
+              const isFullyPaid = person.pendingAmount <= 0;
 
               return (
                 <tr
@@ -285,9 +295,20 @@ export const DebtTable: React.FC<DebtTableProps> = ({ data, onOpenPaymentModal }
                         </div>
                         <div className="flex items-center gap-1.5 mt-0.5">
                           {getCategoryBadge(person.category)}
-                          <span className="text-[11px] text-slate-500">Total: {formatCurrency(person.totalExpected)}</span>
                         </div>
                       </div>
+                    </div>
+                  </td>
+
+                  {/* Valor Total Previsto por Pessoa */}
+                  <td className="py-3.5 px-4">
+                    <div className="font-bold text-slate-900 text-sm">
+                      {formatCurrency(person.totalExpected)}
+                    </div>
+                    <div className="text-[11px] text-slate-500">
+                      {person.expectedReserve > 0
+                        ? `R$ ${person.expectedReserve} res. + R$ ${person.expectedFood} alim.`
+                        : `R$ ${person.expectedFood} alim.`}
                     </div>
                   </td>
 
@@ -342,7 +363,16 @@ export const DebtTable: React.FC<DebtTableProps> = ({ data, onOpenPaymentModal }
 
                   {/* Valor Pendente Geral */}
                   <td className="py-3.5 px-4">
-                    {isFullyPaid ? (
+                    {person.pendingAmount < 0 ? (
+                      <div>
+                        <span className="text-xs font-bold text-emerald-700 flex items-center gap-1">
+                          <CheckCircle2 className="w-3.5 h-3.5" /> Quitado
+                        </span>
+                        <span className="inline-flex items-center text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300 px-1.5 py-0.5 rounded mt-0.5">
+                          Crédito: +{formatCurrency(Math.abs(person.pendingAmount))}
+                        </span>
+                      </div>
+                    ) : isFullyPaid ? (
                       <span className="text-xs font-bold text-emerald-700 flex items-center gap-1">
                         <CheckCircle2 className="w-3.5 h-3.5" /> Quitado
                       </span>
@@ -380,10 +410,24 @@ export const DebtTable: React.FC<DebtTableProps> = ({ data, onOpenPaymentModal }
                       <button
                         type="button"
                         id={`edit-pay-btn-${person.id}`}
-                        onClick={() => onOpenPaymentModal(person)}
-                        className="px-2.5 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 rounded-lg text-xs font-semibold border border-emerald-200 flex items-center gap-1 transition shadow-2xs"
+                        onClick={() => {
+                          if (isAuthenticated) {
+                            onEditPerson(person);
+                          } else if (onRequireAuth) {
+                            onRequireAuth(person);
+                          } else {
+                            onEditPerson(person);
+                          }
+                        }}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-bold border flex items-center gap-1.5 transition shadow-2xs ${
+                          isAuthenticated
+                            ? 'bg-emerald-600 hover:bg-emerald-700 text-white border-emerald-600'
+                            : 'bg-white hover:bg-amber-50 text-slate-700 hover:text-amber-900 border-slate-300 hover:border-amber-400'
+                        }`}
+                        title={isAuthenticated ? `Editar dados de ${person.name}` : `Clique para autenticar e editar`}
                       >
-                        <Edit3 className="w-3.5 h-3.5" /> Atualizar
+                        {isAuthenticated ? <Edit3 className="w-3.5 h-3.5" /> : <Lock className="w-3.5 h-3.5 text-amber-600" />}
+                        <span>Editar</span>
                       </button>
                     </div>
                   </td>
@@ -393,7 +437,7 @@ export const DebtTable: React.FC<DebtTableProps> = ({ data, onOpenPaymentModal }
 
             {sortedData.length === 0 && (
               <tr>
-                <td colSpan={6} className="py-8 text-center text-slate-500">
+                <td colSpan={7} className="py-8 text-center text-slate-500">
                   Nenhum participante encontrado com os filtros selecionados.
                 </td>
               </tr>
@@ -403,21 +447,32 @@ export const DebtTable: React.FC<DebtTableProps> = ({ data, onOpenPaymentModal }
       </div>
 
       {/* Footer summary */}
-      <div className="p-4 bg-slate-50 border-t border-slate-200 flex flex-col sm:flex-row items-start sm:items-center justify-between text-xs text-slate-600 gap-2">
-        <div className="flex flex-wrap items-center gap-4">
+      <div className="p-4 bg-slate-50 border-t border-slate-200 flex flex-col md:flex-row items-start md:items-center justify-between text-xs text-slate-600 gap-3">
+        <div className="flex flex-wrap items-center gap-3 sm:gap-4">
           <span>
             Mostrando <strong className="text-slate-900">{sortedData.length}</strong> de <strong className="text-slate-900">{data.length}</strong>
           </span>
           <span>
-            Pendente Reserva (10/09): <strong className="text-amber-700 font-bold">{formatCurrency(sortedData.reduce((acc, c) => acc + getPersonDeadlineBreakdown(c).pendingReserve, 0))}</strong>
+            Previsto do Grupo: <strong className="text-slate-900 font-bold">{formatCurrency(sortedData.reduce((acc, c) => acc + c.totalExpected, 0))}</strong>
           </span>
           <span>
-            Pendente Alimentação (07/10): <strong className="text-sky-700 font-bold">{formatCurrency(sortedData.reduce((acc, c) => acc + getPersonDeadlineBreakdown(c).pendingFood, 0))}</strong>
+            Já Arrecadado: <strong className="text-emerald-700 font-bold">{formatCurrency(sortedData.reduce((acc, c) => acc + c.paidAmount, 0))}</strong>
+          </span>
+          <span>
+            Reserva (10/09): <strong className="text-emerald-700 font-bold">100% Paga</strong>
+          </span>
+          <span>
+            Falta Alimentação (07/10): <strong className="text-sky-700 font-bold">{formatCurrency(sortedData.reduce((acc, c) => acc + getPersonDeadlineBreakdown(c).pendingFood, 0))}</strong>
           </span>
         </div>
-        <span>
-          Total Geral Restante: <strong className="text-rose-700 font-bold">{formatCurrency(sortedData.reduce((acc, c) => acc + c.pendingAmount, 0))}</strong>
-        </span>
+        <div className="flex flex-wrap items-center gap-3">
+          <span>
+            Saldo em Caixa (Banco): <strong className="text-amber-800 font-bold">{formatCurrency(saldoEmConta)}</strong>
+          </span>
+          <span>
+            Pendente a Receber: <strong className="text-rose-700 font-bold">{formatCurrency(sortedData.filter((c) => c.pendingAmount > 0).reduce((acc, c) => acc + c.pendingAmount, 0))}</strong>
+          </span>
+        </div>
       </div>
     </div>
   );

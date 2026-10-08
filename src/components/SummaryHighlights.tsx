@@ -132,7 +132,7 @@ export const SummaryHighlights: React.FC<SummaryHighlightsProps> = ({ data, onOp
             </div>
             <div>
               <h4 className="font-bold text-slate-900 text-sm">Reserva Quitada (10/09)</h4>
-              <span className="text-[11px] text-emerald-700 font-medium">1ª Parcela em dia • Saldo: {formatCurrency(saldoEmConta)}</span>
+              <span className="text-[11px] text-emerald-700 font-medium">1ª Parcela em dia (100% dos adultos)</span>
             </div>
           </div>
           <span className="text-[11px] text-emerald-800 font-bold bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
@@ -149,7 +149,11 @@ export const SummaryHighlights: React.FC<SummaryHighlightsProps> = ({ data, onOp
               <div>
                 <span className="text-sm font-bold text-slate-900">{person.name}</span>
                 <p className="text-[11px] text-slate-500">
-                  {person.pendingAmount === 0 ? '100% Tudo Quitado 🎉' : `Falta só alimentação (${formatCurrency(b.pendingFood)})`}
+                  {person.pendingAmount < 0
+                    ? `Quitado (+${formatCurrency(Math.abs(person.pendingAmount))} pago a mais)`
+                    : person.pendingAmount === 0
+                    ? '100% Tudo Quitado 🎉'
+                    : `Falta só alimentação (${formatCurrency(b.pendingFood)})`}
                 </p>
               </div>
               <div className="text-right">

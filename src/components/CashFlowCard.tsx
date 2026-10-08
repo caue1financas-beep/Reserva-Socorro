@@ -24,6 +24,13 @@ export const CashFlowCard: React.FC<CashFlowCardProps> = ({ data }) => {
   const saldoEmConta = totalArrecadado - totalGastos; // R$ 734,00
 
   const totalAdultos = validData.filter((p) => p.category === 'adulto').length;
+  const totalCriancas = validData.filter((p) => p.category === 'crianca_outros').length;
+  const totalPrevistoGeral = validData.reduce((acc, curr) => acc + curr.totalExpected, 0); // R$ 4.214,00
+  const pendentesList = validData.filter((p) => p.pendingAmount > 0);
+  const totalPendenteBruto = pendentesList.reduce((acc, curr) => acc + curr.pendingAmount, 0); // R$ 98,00 (Beatriz 38, Dudu 30, Luigi 30)
+  const creditosList = validData.filter((p) => p.pendingAmount < 0);
+  const totalCreditos = creditosList.reduce((acc, curr) => acc + Math.abs(curr.pendingAmount), 0); // R$ 64,00 (Jefferson)
+  const saldoLiquidoPendente = totalPrevistoGeral - totalArrecadado; // R$ 34,00 (98 - 64)
 
   return (
     <div
@@ -39,14 +46,14 @@ export const CashFlowCard: React.FC<CashFlowCardProps> = ({ data }) => {
           <div>
             <div className="flex items-center gap-2">
               <h3 className="text-base font-bold text-slate-900">
-                Fluxo de Caixa & Saldo em Conta
+                Fluxo de Caixa & Saldo em Conta Bancária
               </h3>
               <span className="inline-flex items-center gap-1 text-[11px] font-bold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-md border border-emerald-300">
                 <CheckCircle2 className="w-3 h-3 text-emerald-600" /> Reserva 100% Quitada com o Imóvel
               </span>
             </div>
             <p className="text-xs text-slate-500 mt-0.5">
-              Adiantamento (R$ 500) + Quitação (R$ 2.000) pagos. Saldo restante em conta disponível para alimentação.
+              Adiantamento (R$ 500) + Quitação (R$ 2.000) pagos ao imóvel. Saldo restante em conta bancária disponível para alimentação.
             </p>
           </div>
         </div>
@@ -54,7 +61,7 @@ export const CashFlowCard: React.FC<CashFlowCardProps> = ({ data }) => {
         {/* Big Saldo Badge */}
         <div className="flex items-center gap-3">
           <div className="bg-amber-50 px-4 py-2 rounded-xl border-2 border-amber-300 flex items-center gap-2.5 shadow-2xs">
-            <span className="text-xs font-semibold text-amber-900">Saldo em Conta:</span>
+            <span className="text-xs font-semibold text-amber-900">Saldo Atual em Conta:</span>
             <span className="text-xl font-black text-amber-800 tracking-tight">
               {formatCurrency(saldoEmConta)}
             </span>
@@ -63,7 +70,7 @@ export const CashFlowCard: React.FC<CashFlowCardProps> = ({ data }) => {
             type="button"
             onClick={() => setIsExpanded(!isExpanded)}
             className="p-2 rounded-lg bg-slate-100 text-slate-500 hover:text-slate-800 hover:bg-slate-200 transition"
-            title={isExpanded ? 'Recolher tabela' : 'Expandir tabela'}
+            title={isExpanded ? 'Recolher demonstrativo' : 'Expandir demonstrativo'}
           >
             {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
           </button>
@@ -72,85 +79,130 @@ export const CashFlowCard: React.FC<CashFlowCardProps> = ({ data }) => {
 
       {/* Table Section matching user's spreadsheet */}
       {isExpanded && (
-        <div className="mt-4 overflow-hidden rounded-xl border border-slate-300 shadow-2xs">
-          <table className="w-full text-left text-xs border-collapse">
-            <thead>
-              <tr className="bg-[#286090] text-white font-bold uppercase tracking-wider">
-                <th className="py-2.5 px-4">Descrição</th>
-                <th className="py-2.5 px-4 text-right">Valor</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-200/60 text-slate-800 font-medium">
-              {/* Adiantamento Pago reserva */}
-              <tr className="bg-[#fce5e5] hover:bg-rose-100/70 transition">
-                <td className="py-2.5 px-4 flex items-center gap-2 text-rose-950 font-semibold">
-                  <ArrowDownRight className="w-3.5 h-3.5 text-rose-700 shrink-0" />
-                  <span>Adiantamento Pago reserva</span>
-                </td>
-                <td className="py-2.5 px-4 text-right font-bold text-rose-800">
-                  {formatCurrency(ADVANCE_RESERVE_EXPENSE)}
-                </td>
-              </tr>
+        <div className="mt-4 space-y-4">
+          <div className="overflow-hidden rounded-xl border border-slate-300 shadow-2xs">
+            <table className="w-full text-left text-xs border-collapse">
+              <thead>
+                <tr className="bg-[#286090] text-white font-bold uppercase tracking-wider">
+                  <th className="py-2.5 px-4">Descrição Financeira da Viagem</th>
+                  <th className="py-2.5 px-4 text-right">Valor</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-200/60 text-slate-800 font-medium">
+                {/* Adiantamento Pago reserva */}
+                <tr className="bg-[#fce5e5] hover:bg-rose-100/70 transition">
+                  <td className="py-2.5 px-4 flex items-center gap-2 text-rose-950 font-semibold">
+                    <ArrowDownRight className="w-3.5 h-3.5 text-rose-700 shrink-0" />
+                    <span>Adiantamento Pago reserva (pago ao proprietário)</span>
+                  </td>
+                  <td className="py-2.5 px-4 text-right font-bold text-rose-800">
+                    {formatCurrency(ADVANCE_RESERVE_EXPENSE)}
+                  </td>
+                </tr>
 
-              {/* Quitação reserva */}
-              <tr className="bg-[#fce5e5] hover:bg-rose-100/70 transition">
-                <td className="py-2.5 px-4 flex items-center gap-2 text-rose-950 font-semibold">
-                  <ArrowDownRight className="w-3.5 h-3.5 text-rose-700 shrink-0" />
-                  <span>Quitação reserva</span>
-                </td>
-                <td className="py-2.5 px-4 text-right font-bold text-rose-800">
-                  {formatCurrency(SETTLEMENT_RESERVE_EXPENSE)}
-                </td>
-              </tr>
+                {/* Quitação reserva */}
+                <tr className="bg-[#fce5e5] hover:bg-rose-100/70 transition">
+                  <td className="py-2.5 px-4 flex items-center gap-2 text-rose-950 font-semibold">
+                    <ArrowDownRight className="w-3.5 h-3.5 text-rose-700 shrink-0" />
+                    <span>Quitação da reserva (pago ao proprietário)</span>
+                  </td>
+                  <td className="py-2.5 px-4 text-right font-bold text-rose-800">
+                    {formatCurrency(SETTLEMENT_RESERVE_EXPENSE)}
+                  </td>
+                </tr>
 
-              {/* Total de gastos */}
-              <tr className="bg-[#fff2cc] text-amber-950 font-bold border-y border-amber-300">
-                <td className="py-2.5 px-4">Total de gastos</td>
-                <td className="py-2.5 px-4 text-right font-black text-amber-900">
-                  {formatCurrency(totalGastos)}
-                </td>
-              </tr>
+                {/* Total de gastos */}
+                <tr className="bg-[#fff2cc] text-amber-950 font-bold border-y border-amber-300">
+                  <td className="py-2.5 px-4">Total de gastos pagos (Reserva do Imóvel 100% quitada)</td>
+                  <td className="py-2.5 px-4 text-right font-black text-amber-900">
+                    {formatCurrency(totalGastos)}
+                  </td>
+                </tr>
 
-              {/* Valores arrecadados */}
-              <tr className="bg-[#d9ead3] text-emerald-950 font-semibold">
-                <td className="py-2.5 px-4 flex items-center gap-2">
-                  <ArrowUpRight className="w-3.5 h-3.5 text-emerald-700 shrink-0" />
-                  <span>Valores arrecadados</span>
-                </td>
-                <td className="py-2.5 px-4 text-right font-black text-emerald-800">
-                  {formatCurrency(totalArrecadado)}
-                </td>
-              </tr>
+                {/* Valores arrecadados */}
+                <tr className="bg-[#d9ead3] text-emerald-950 font-semibold">
+                  <td className="py-2.5 px-4 flex items-center gap-2">
+                    <ArrowUpRight className="w-3.5 h-3.5 text-emerald-700 shrink-0" />
+                    <span>Valores arrecadados dos participantes (Pix recebidos)</span>
+                  </td>
+                  <td className="py-2.5 px-4 text-right font-black text-emerald-800">
+                    {formatCurrency(totalArrecadado)}
+                  </td>
+                </tr>
 
-              {/* Saldo em conta */}
-              <tr className="bg-[#ffe599] text-amber-950 font-bold text-sm border-t-2 border-amber-400">
-                <td className="py-3 px-4 flex items-center gap-2">
-                  <DollarSign className="w-4 h-4 text-amber-800 shrink-0" />
-                  <span>Saldo em conta</span>
-                </td>
-                <td className="py-3 px-4 text-right font-black text-amber-950 text-base">
-                  {formatCurrency(saldoEmConta)}
-                </td>
-              </tr>
+                {/* Saldo em conta */}
+                <tr className="bg-[#ffe599] text-amber-950 font-bold text-sm border-t-2 border-amber-400">
+                  <td className="py-3 px-4 flex items-center gap-2">
+                    <DollarSign className="w-4 h-4 text-amber-800 shrink-0" />
+                    <div>
+                      <span>Saldo atual em conta bancária</span>
+                      <p className="text-[11px] text-amber-900 font-normal">
+                        Disponível em caixa para custear as compras de alimentação
+                      </p>
+                    </div>
+                  </td>
+                  <td className="py-3 px-4 text-right font-black text-amber-950 text-base">
+                    {formatCurrency(saldoEmConta)}
+                  </td>
+                </tr>
 
-              {/* Rateio por pessoa */}
-              <tr className="bg-[#f6b26b] text-slate-900 font-semibold">
-                <td className="py-2.5 px-4 flex items-center gap-2">
-                  <Calculator className="w-3.5 h-3.5 text-slate-900 shrink-0" />
-                  <div>
-                    <span className="font-bold">Rateio por pessoa</span>
-                    <p className="text-[11px] text-slate-800 font-normal">
-                      13 adultos a R$ 188,00 + Cleide a R$ 56,00 na reserva ({formatCurrency(2500)}) + R$ 120,00 na alimentação
-                    </p>
-                  </div>
-                </td>
-                <td className="py-2.5 px-4 text-right">
-                  <span className="font-black text-slate-950 text-sm">R$ 188,00</span>
-                  <span className="block text-[10px] text-slate-800 font-medium">reserva fixada</span>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+                {/* Valor / Rateio por pessoa */}
+                <tr className="bg-[#f6b26b] text-slate-900 font-semibold">
+                  <td className="py-2.5 px-4 flex items-center gap-2">
+                    <Calculator className="w-3.5 h-3.5 text-slate-900 shrink-0" />
+                    <div>
+                      <span className="font-bold">Valores por Pessoa (Rateio Oficial)</span>
+                      <p className="text-[11px] text-slate-800 font-normal">
+                        • {totalAdultos} adultos: <strong>R$ 308,00/pessoa</strong> (R$ 188 reserva + R$ 120 alimentação)<br />
+                        • {totalCriancas} crianças: <strong>R$ 30,00/pessoa</strong> (isento reserva + R$ 30 alimentação)
+                      </p>
+                    </div>
+                  </td>
+                  <td className="py-2.5 px-4 text-right">
+                    <span className="font-black text-slate-950 text-sm">R$ 308,00 / R$ 30,00</span>
+                    <span className="block text-[10px] text-slate-800 font-medium">previsto por categoria</span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          {/* Demonstrativo de Reconciliação dos Valores Pendentes */}
+          <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 text-xs space-y-2">
+            <h4 className="font-bold text-slate-900 text-xs uppercase tracking-wider flex items-center gap-1.5">
+              <span>🔍</span> Conferência & Reconciliação dos Valores:
+            </h4>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-1">
+              <div className="bg-white p-2.5 rounded-lg border border-slate-200 shadow-2xs">
+                <span className="text-slate-500 block text-[11px]">Total Geral Previsto:</span>
+                <span className="font-bold text-slate-900 text-sm">{formatCurrency(totalPrevistoGeral)}</span>
+                <span className="text-[10px] text-slate-400 block mt-0.5">20 participantes</span>
+              </div>
+              <div className="bg-white p-2.5 rounded-lg border border-slate-200 shadow-2xs">
+                <span className="text-slate-500 block text-[11px]">Total Já Arrecadado:</span>
+                <span className="font-bold text-emerald-700 text-sm">{formatCurrency(totalArrecadado)}</span>
+                <span className="text-[10px] text-slate-400 block mt-0.5">Pix recebidos</span>
+              </div>
+              <div className="bg-white p-2.5 rounded-lg border border-slate-200 shadow-2xs">
+                <span className="text-slate-500 block text-[11px]">Pendente a Receber:</span>
+                <span className="font-bold text-rose-700 text-sm">{formatCurrency(totalPendenteBruto)}</span>
+                <span className="text-[10px] text-slate-500 block mt-0.5">
+                  {pendentesList.length > 0
+                    ? pendentesList.map((p) => `${p.name} (${formatCurrency(p.pendingAmount)})`).join(', ')
+                    : 'Nenhuma pendência'}
+                </span>
+              </div>
+              <div className="bg-white p-2.5 rounded-lg border border-slate-200 shadow-2xs">
+                <span className="text-slate-500 block text-[11px]">Saldo Líquido Restante:</span>
+                <span className="font-bold text-slate-900 text-sm">{formatCurrency(saldoLiquidoPendente)}</span>
+                <span className="text-[10px] text-slate-500 block mt-0.5">
+                  {totalCreditos > 0
+                    ? `Previsto menos Arrecadado (créditos: ${formatCurrency(totalCreditos)})`
+                    : 'Diferença exata: Previsto - Arrecadado'}
+                </span>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>

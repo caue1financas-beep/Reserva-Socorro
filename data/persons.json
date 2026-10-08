@@ -1,0 +1,222 @@
+[
+  {
+    "id": "1",
+    "name": "Eder",
+    "category": "adulto",
+    "expectedReserve": 188,
+    "expectedFood": 120,
+    "totalExpected": 308,
+    "paidAmount": 308,
+    "pendingAmount": 0,
+    "status": "quitado"
+  },
+  {
+    "id": "2",
+    "name": "Cibele",
+    "category": "adulto",
+    "expectedReserve": 188,
+    "expectedFood": 120,
+    "totalExpected": 308,
+    "paidAmount": 308,
+    "pendingAmount": 0,
+    "status": "quitado"
+  },
+  {
+    "id": "3",
+    "name": "Lucas",
+    "category": "adulto",
+    "expectedReserve": 188,
+    "expectedFood": 120,
+    "totalExpected": 308,
+    "paidAmount": 308,
+    "pendingAmount": 0,
+    "status": "quitado"
+  },
+  {
+    "id": "4",
+    "name": "Carol",
+    "category": "adulto",
+    "expectedReserve": 188,
+    "expectedFood": 120,
+    "totalExpected": 308,
+    "paidAmount": 308,
+    "pendingAmount": 0,
+    "status": "quitado"
+  },
+  {
+    "id": "5",
+    "name": "Fernando",
+    "category": "adulto",
+    "expectedReserve": 188,
+    "expectedFood": 120,
+    "totalExpected": 308,
+    "paidAmount": 308,
+    "pendingAmount": 0,
+    "status": "quitado"
+  },
+  {
+    "id": "6",
+    "name": "Beatriz",
+    "category": "adulto",
+    "expectedReserve": 188,
+    "expectedFood": 120,
+    "totalExpected": 308,
+    "paidAmount": 308,
+    "pendingAmount": 0,
+    "status": "quitado"
+  },
+  {
+    "id": "7",
+    "name": "Paloma",
+    "category": "adulto",
+    "expectedReserve": 188,
+    "expectedFood": 120,
+    "totalExpected": 308,
+    "paidAmount": 308,
+    "pendingAmount": 0,
+    "status": "quitado"
+  },
+  {
+    "id": "8",
+    "name": "Juliano",
+    "category": "adulto",
+    "expectedReserve": 188,
+    "expectedFood": 120,
+    "totalExpected": 308,
+    "paidAmount": 308,
+    "pendingAmount": 0,
+    "status": "quitado"
+  },
+  {
+    "id": "9",
+    "name": "Jessica",
+    "category": "adulto",
+    "expectedReserve": 188,
+    "expectedFood": 120,
+    "totalExpected": 308,
+    "paidAmount": 308,
+    "pendingAmount": 0,
+    "status": "quitado"
+  },
+  {
+    "id": "10",
+    "name": "Jefferson",
+    "category": "adulto",
+    "expectedReserve": 188,
+    "expectedFood": 120,
+    "totalExpected": 308,
+    "paidAmount": 244,
+    "pendingAmount": 64,
+    "status": "parcial"
+  },
+  {
+    "id": "11",
+    "name": "Miriam",
+    "category": "adulto",
+    "expectedReserve": 188,
+    "expectedFood": 120,
+    "totalExpected": 308,
+    "paidAmount": 308,
+    "pendingAmount": 0,
+    "status": "quitado"
+  },
+  {
+    "id": "12",
+    "name": "Cauê",
+    "category": "adulto",
+    "expectedReserve": 188,
+    "expectedFood": 120,
+    "totalExpected": 308,
+    "paidAmount": 308,
+    "pendingAmount": 0,
+    "status": "quitado"
+  },
+  {
+    "id": "13",
+    "name": "Mari",
+    "category": "adulto",
+    "expectedReserve": 188,
+    "expectedFood": 120,
+    "totalExpected": 308,
+    "paidAmount": 308,
+    "pendingAmount": 0,
+    "status": "quitado"
+  },
+  {
+    "id": "17",
+    "name": "Olívia",
+    "category": "crianca_outros",
+    "expectedReserve": 0,
+    "expectedFood": 30,
+    "totalExpected": 30,
+    "paidAmount": 30,
+    "pendingAmount": 0,
+    "status": "quitado"
+  },
+  {
+    "id": "18",
+    "name": "Dudu",
+    "category": "crianca_outros",
+    "expectedReserve": 0,
+    "expectedFood": 30,
+    "totalExpected": 30,
+    "paidAmount": 0,
+    "pendingAmount": 30,
+    "status": "pendente_total"
+  },
+  {
+    "id": "19",
+    "name": "Yasmin",
+    "category": "crianca_outros",
+    "expectedReserve": 0,
+    "expectedFood": 30,
+    "totalExpected": 30,
+    "paidAmount": 30,
+    "pendingAmount": 0,
+    "status": "quitado"
+  },
+  {
+    "id": "20",
+    "name": "Isadora",
+    "category": "crianca_outros",
+    "expectedReserve": 0,
+    "expectedFood": 30,
+    "totalExpected": 30,
+    "paidAmount": 30,
+    "pendingAmount": 0,
+    "status": "quitado"
+  },
+  {
+    "id": "21",
+    "name": "Maitê",
+    "category": "crianca_outros",
+    "expectedReserve": 0,
+    "expectedFood": 30,
+    "totalExpected": 30,
+    "paidAmount": 30,
+    "pendingAmount": 0,
+    "status": "quitado"
+  },
+  {
+    "id": "22",
+    "name": "Luigi",
+    "category": "crianca_outros",
+    "expectedReserve": 0,
+    "expectedFood": 30,
+    "totalExpected": 30,
+    "paidAmount": 0,
+    "pendingAmount": 30,
+    "status": "pendente_total"
+  },
+  {
+    "id": "23",
+    "name": "Léo",
+    "category": "crianca_outros",
+    "expectedReserve": 0,
+    "expectedFood": 30,
+    "totalExpected": 30,
+    "paidAmount": 30,
+    "pendingAmount": 0,
+    "status": "quitado"
+  }
+]

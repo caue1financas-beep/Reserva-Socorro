@@ -22,7 +22,10 @@ export const MetricCards: React.FC<MetricCardsProps> = ({ data }) => {
 
   const totalExpected = data.reduce((acc, curr) => acc + curr.totalExpected, 0);
   const totalPaid = data.reduce((acc, curr) => acc + curr.paidAmount, 0);
-  const totalPending = data.reduce((acc, curr) => acc + curr.pendingAmount, 0);
+  const totalPendingBruto = data.filter((c) => c.pendingAmount > 0).reduce((acc, curr) => acc + curr.pendingAmount, 0);
+  const totalCredito = data.filter((c) => c.pendingAmount < 0).reduce((acc, curr) => acc + Math.abs(curr.pendingAmount), 0);
+  const saldoLiquidoPendente = totalExpected - totalPaid;
+  const saldoEmContaBancaria = totalPaid - 2500;
 
   const reservePaidPeople = breakdowns.filter((b) => b.isReservePaid && b.reserveExpected > 0).length;
   const reservePendingPeople = breakdowns.filter((b) => b.pendingReserve > 0).length;
@@ -40,15 +43,15 @@ export const MetricCards: React.FC<MetricCardsProps> = ({ data }) => {
               </div>
               <div>
                 <span className="text-[11px] uppercase font-bold tracking-wider text-amber-400 bg-amber-950/80 px-2 py-0.5 rounded border border-amber-800/60 inline-flex items-center gap-1">
-                  <Calendar className="w-3 h-3" /> Vence em 10/09
+                  <Calendar className="w-3 h-3" /> Venceu em 10/09
                 </span>
-                <h3 className="text-base font-bold text-white mt-1">1ª Parcela: RESERVA (R$ 188/ad)</h3>
+                <h3 className="text-base font-bold text-white mt-1">1ª Parcela: RESERVA (R$ 188/adulto)</h3>
               </div>
             </div>
             <div className="text-right">
-              <span className="text-xs text-slate-400 block">Falta arrecadar</span>
-              <span className="text-2xl sm:text-3xl font-black text-amber-400 tracking-tight">
-                {formatCurrency(totalPendingReserve)}
+              <span className="text-xs text-slate-400 block">Status com o imóvel</span>
+              <span className="text-xl sm:text-2xl font-black text-emerald-400 tracking-tight flex items-center justify-end gap-1">
+                <CheckCircle2 className="w-5 h-5" /> 100% Quitada
               </span>
             </div>
           </div>
@@ -59,24 +62,24 @@ export const MetricCards: React.FC<MetricCardsProps> = ({ data }) => {
               <span className="font-semibold text-slate-200">{formatCurrency(totalExpectedReserve)}</span>
             </div>
             <div>
-              <span className="text-slate-500 block text-[11px]">Já Arrecadado:</span>
-              <span className="font-bold text-emerald-400">{formatCurrency(totalPaidReserve)}</span>
+              <span className="text-slate-500 block text-[11px]">Pago ao Imóvel:</span>
+              <span className="font-bold text-emerald-400">{formatCurrency(2500)}</span>
             </div>
             <div>
-              <span className="text-slate-500 block text-[11px]">Progresso:</span>
-              <span className="font-bold text-amber-400">{percentReserve.toFixed(1)}%</span>
+              <span className="text-slate-500 block text-[11px]">Status:</span>
+              <span className="font-bold text-emerald-400">100% Paga</span>
             </div>
           </div>
 
           <div className="w-full bg-slate-950 rounded-full h-2 mt-3 overflow-hidden border border-slate-800">
             <div
-              className="bg-amber-500 h-full rounded-full transition-all duration-300"
-              style={{ width: `${percentReserve}%` }}
+              className="bg-emerald-500 h-full rounded-full transition-all duration-300"
+              style={{ width: `100%` }}
             ></div>
           </div>
           <div className="mt-2 text-[11px] text-slate-400 flex items-center justify-between">
-            <span>{reservePendingPeople} pessoas com reserva pendente</span>
-            <span>{reservePaidPeople} adultos já quitaram</span>
+            <span className="text-emerald-400">✓ Todos os participantes em dia com a reserva</span>
+            <span>{reservePaidPeople} adultos quitados</span>
           </div>
         </div>
 
@@ -132,7 +135,7 @@ export const MetricCards: React.FC<MetricCardsProps> = ({ data }) => {
 
       {/* Quick Status Bar */}
       <div className="bg-slate-900/90 border border-slate-800 rounded-xl p-3.5 flex flex-wrap items-center justify-between gap-3 text-xs">
-        <div className="flex items-center gap-4">
+        <div className="flex flex-wrap items-center gap-3 sm:gap-4">
           <span className="text-slate-400 font-medium">Balanço Consolidado:</span>
           <span className="text-white">
             Previsto: <strong className="font-bold">{formatCurrency(totalExpected)}</strong>
@@ -140,9 +143,17 @@ export const MetricCards: React.FC<MetricCardsProps> = ({ data }) => {
           <span className="text-emerald-400">
             Arrecadado: <strong className="font-bold">{formatCurrency(totalPaid)}</strong>
           </span>
-          <span className="text-rose-400">
-            Pendente Geral: <strong className="font-bold">{formatCurrency(totalPending)}</strong>
+          <span className="text-amber-400">
+            Saldo em Caixa (Banco): <strong className="font-bold">{formatCurrency(saldoEmContaBancaria)}</strong>
           </span>
+          <span className="text-rose-400">
+            Pendente a Receber: <strong className="font-bold">{formatCurrency(totalPendingBruto)}</strong>
+          </span>
+          {totalCredito > 0 && (
+            <span className="text-emerald-300">
+              Crédito: <strong className="font-bold">+{formatCurrency(totalCredito)}</strong>
+            </span>
+          )}
         </div>
         <div className="text-slate-400 text-[11px]">
           Total de <strong>{data.length}</strong> participantes cadastrados

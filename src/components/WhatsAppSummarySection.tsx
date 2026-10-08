@@ -22,8 +22,8 @@ export const WhatsAppSummarySection: React.FC<WhatsAppSummarySectionProps> = ({ 
   const isVacant = (name: string) => name.toLowerCase().includes('vaga') || name.toLowerCase().includes('disponível');
   const validData = data.filter((p) => !isVacant(p.name));
   const pendingList = validData.filter((p) => p.pendingAmount > 0);
-  const fullyPaidList = validData.filter((p) => p.pendingAmount === 0);
-  const totalPendente = validData.reduce((acc, curr) => acc + curr.pendingAmount, 0);
+  const fullyPaidList = validData.filter((p) => p.pendingAmount <= 0);
+  const totalPendenteBruto = pendingList.reduce((acc, curr) => acc + curr.pendingAmount, 0);
   const totalArrecadadoGeral = validData.reduce((acc, curr) => acc + curr.paidAmount, 0);
   const saldoEmConta = totalArrecadadoGeral - 2500;
 
@@ -72,7 +72,7 @@ export const WhatsAppSummarySection: React.FC<WhatsAppSummarySectionProps> = ({ 
               </span>
             </h3>
             <p className="text-xs text-slate-500">
-              {pendingList.length} pessoas com pendências (Total de R$ {totalPendente.toLocaleString('pt-BR')},00) • {fullyPaidList.length} pessoas 100% quitadas
+              {pendingList.length} pessoas com pendências (Total de {formatCurrency(totalPendenteBruto)}) • {fullyPaidList.length} pessoas 100% quitadas
             </p>
           </div>
         </div>

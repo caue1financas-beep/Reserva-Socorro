@@ -16,7 +16,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ person, onClose, onS
   const [notes, setNotes] = useState<string>(person.notes || '');
 
   const numericPaid = parseFloat(paidInput) || 0;
-  const newPending = Math.max(0, person.totalExpected - numericPaid);
+  const newPending = person.totalExpected - numericPaid;
   const isOverpaid = numericPaid > person.totalExpected;
 
   // Breakdown for simulated payment
@@ -92,7 +92,15 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ person, onClose, onS
 
             <div className="flex justify-between text-slate-600 pt-1 border-t border-slate-200 text-[11px]">
               <span>Pago atualmente: <strong className="text-emerald-700">{formatCurrency(person.paidAmount)}</strong></span>
-              <span>Falta pagar: <strong className="text-rose-700">{formatCurrency(person.pendingAmount)}</strong></span>
+              <span>
+                {person.pendingAmount < 0 ? (
+                  <strong className="text-emerald-700">Quitado (+{formatCurrency(Math.abs(person.pendingAmount))} crédito)</strong>
+                ) : person.pendingAmount === 0 ? (
+                  <strong className="text-emerald-700">100% Quitado</strong>
+                ) : (
+                  <>Falta pagar: <strong className="text-rose-700">{formatCurrency(person.pendingAmount)}</strong></>
+                )}
+              </span>
             </div>
           </div>
 
