@@ -47,35 +47,81 @@ export async function fetchPersons(): Promise<PersonDebt[]> {
  * Authenticate against /api/admin backend route
  * Compares password exclusively against process.env.ADMIN_PASSWORD in backend
  */
-export async function loginAdmin(password: string, username?: string): Promise<{ success: boolean; token?: string; error?: string }> {
+export async function loginAdmin(password: string, username?: string): Promise<{ success: boolean; token?: string; error?: string; message?: string }> {
   try {
     const res = await fetch('/api/admin', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Accept': 'application/json',
       },
       body: JSON.stringify({ password, username }),
     });
 
-    const data = await res.json();
-    if (!res.ok || !data.success) {
+    let data: any = null;
+    const contentType = res.headers.get('content-type') || '';
+
+    // Safely parse JSON if possible, otherwise handle plain text / HTML gracefully
+    if (contentType.includes('application/json')) {
+      try {
+        data = await res.json();
+      } catch (jsonErr) {
+        console.error('Failed to parse JSON response:', jsonErr);
+      }
+    } else {
+      const textResponse = await res.text().catch(() => '');
+      console.warn('Non-JSON response from server:', textResponse);
+    }
+
+    if (!res.ok) {
+      const errorMessage =
+        data?.message ||
+        data?.error ||
+        (res.status === 401
+          ? 'Senha incorreta. Verifique e tente novamente.'
+          : res.status === 500
+          ? 'Erro interno no servidor ao processar autenticação.'
+          : `Erro de comunicação com o servidor (Status ${res.status}).`);
+
       return {
         success: false,
-        error: data.error || 'Senha incorreta.',
+        error: errorMessage,
+        message: errorMessage,
+      };
+    }
+
+    if (!data || typeof data !== 'object') {
+      return {
+        success: false,
+        error: 'Resposta inválida do servidor. Tente novamente mais tarde.',
+        message: 'Resposta inválida do servidor. Tente novamente mais tarde.',
+      };
+    }
+
+    if (!data.success) {
+      const err = data.message || data.error || 'Senha incorreta.';
+      return {
+        success: false,
+        error: err,
+        message: err,
       };
     }
 
     if (data.token) {
       setStoredToken(data.token);
     }
+
     return {
       success: true,
       token: data.token,
+      message: data.message || 'Autenticado com sucesso!',
     };
   } catch (err: any) {
+    console.error('Login error:', err);
     return {
       success: false,
-      error: err.message || 'Erro de conexão com o servidor.',
+      error: 'Não foi possível conectar ao servidor. Verifique sua conexão e tente novamente.',
+      message: 'Não foi possível conectar ao servidor. Verifique sua conexão e tente novamente.',
     };
   }
 }

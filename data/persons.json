@@ -8,7 +8,8 @@
     "totalExpected": 308,
     "paidAmount": 308,
     "pendingAmount": 0,
-    "status": "quitado"
+    "status": "quitado",
+    "lastPaymentDate": "2026-10-08T18:26:26.671Z"
   },
   {
     "id": "2",

@@ -28,10 +28,12 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onSucce
         onSuccess(result.token);
         onClose();
       } else {
-        setError(result.error || 'Senha incorreta. Verifique e tente novamente.');
+        // Display friendly error message returned from API/safe handler
+        setError(result.message || result.error || 'Senha incorreta. Verifique e tente novamente.');
       }
     } catch (err: any) {
-      setError(err?.message || 'Falha ao conectar ao servidor para validar a senha.');
+      console.error('Modal login submission caught error:', err);
+      setError('Ocorreu um problema ao conectar com o servidor. Tente novamente em instantes.');
     } finally {
       setIsLoading(false);
     }

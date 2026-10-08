@@ -148,7 +148,7 @@ export async function savePersons(data: PersonDebt[]): Promise<void> {
 }
 
 /**
- * Update an existing person
+ * Update an existing person with dynamic recalculation for all editable fields
  */
 export async function updatePerson(id: string, updates: Partial<PersonDebt>): Promise<PersonDebt | null> {
   const current = await getPersons();
@@ -156,11 +156,37 @@ export async function updatePerson(id: string, updates: Partial<PersonDebt>): Pr
   if (index === -1) return null;
 
   const existing = current[index];
-  const expectedReserve = updates.expectedReserve !== undefined ? updates.expectedReserve : existing.expectedReserve;
-  const expectedFood = updates.expectedFood !== undefined ? updates.expectedFood : existing.expectedFood;
-  const totalExpected = expectedReserve + expectedFood;
-  const paidAmount = updates.paidAmount !== undefined ? updates.paidAmount : existing.paidAmount;
-  const pendingAmount = totalExpected - paidAmount;
+  
+  let expectedReserve = updates.expectedReserve !== undefined ? Number(updates.expectedReserve) : existing.expectedReserve;
+  let expectedFood = updates.expectedFood !== undefined ? Number(updates.expectedFood) : existing.expectedFood;
+  let totalExpected = updates.totalExpected !== undefined ? Number(updates.totalExpected) : (expectedReserve + expectedFood);
+
+  // If totalExpected was updated directly without explicit reserve/food breakdown
+  if (updates.totalExpected !== undefined && updates.expectedReserve === undefined && updates.expectedFood === undefined) {
+    if (existing.expectedReserve > 0 && totalExpected >= existing.expectedReserve) {
+      expectedReserve = existing.expectedReserve;
+      expectedFood = Math.round((totalExpected - existing.expectedReserve) * 100) / 100;
+    } else {
+      expectedReserve = 0;
+      expectedFood = totalExpected;
+    }
+  } else {
+    totalExpected = Math.round((expectedReserve + expectedFood) * 100) / 100;
+  }
+
+  let paidAmount = updates.paidAmount !== undefined ? Number(updates.paidAmount) : existing.paidAmount;
+
+  // If pendingAmount was updated directly without updating paidAmount
+  if (updates.pendingAmount !== undefined && updates.paidAmount === undefined) {
+    paidAmount = Math.max(0, Math.round((totalExpected - Number(updates.pendingAmount)) * 100) / 100);
+  }
+
+  // If quick status 'quitado'
+  if (updates.status === 'quitado' && updates.paidAmount === undefined) {
+    paidAmount = totalExpected;
+  }
+
+  let pendingAmount = Math.round((totalExpected - paidAmount) * 100) / 100;
 
   let status: 'quitado' | 'parcial' | 'pendente_total' = 'pendente_total';
   if (pendingAmount <= 0) status = 'quitado';

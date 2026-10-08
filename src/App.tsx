@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { INITIAL_DEBT_DATA } from './data/initialData';
 import { PersonDebt } from './types';
 import { Header } from './components/Header';
@@ -9,17 +9,14 @@ import { DebtTable } from './components/DebtTable';
 import { PaymentModal } from './components/PaymentModal';
 import { ShareSummaryModal } from './components/ShareSummaryModal';
 import { AddPersonModal } from './components/AddPersonModal';
-import { LoginModal } from './components/LoginModal';
 import { EditPersonModal } from './components/EditPersonModal';
+import { EditableField, recalculatePersonValues } from './utils/calculations';
 import {
   fetchPersons,
   updatePersonApi,
   deletePersonApi,
   addPersonApi,
   resetPersonsApi,
-  getStoredToken,
-  setStoredToken,
-  removeStoredToken,
 } from './services/api';
 
 const STORAGE_KEY = 'reserva_debitos_data_v19';
@@ -40,13 +37,11 @@ export default function App() {
     return INITIAL_DEBT_DATA;
   });
 
-  const [authToken, setAuthToken] = useState<string | null>(() => getStoredToken());
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => !!getStoredToken());
+  // Edit Mode toggle: False by default to prevent accidental edits for general visitors
+  const [isEditMode, setIsEditMode] = useState<boolean>(false);
 
   const [selectedPersonForPayment, setSelectedPersonForPayment] = useState<PersonDebt | null>(null);
   const [personBeingEdited, setPersonBeingEdited] = useState<PersonDebt | null>(null);
-  const [pendingPersonToEdit, setPendingPersonToEdit] = useState<PersonDebt | null>(null);
-  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isResetModalOpen, setIsResetModalOpen] = useState(false);
@@ -96,66 +91,75 @@ export default function App() {
     }
   }, [data]);
 
-  const handleLoginSuccess = (token?: string) => {
-    setIsAuthenticated(true);
-    if (token) {
-      setAuthToken(token);
-      setStoredToken(token);
-    }
-    showToast('Modo de edição liberado com sucesso!');
-    if (pendingPersonToEdit) {
-      setPersonBeingEdited(pendingPersonToEdit);
-      setPendingPersonToEdit(null);
-    }
+  const handleToggleEditMode = () => {
+    setIsEditMode((prev) => {
+      const next = !prev;
+      showToast(next ? 'Função de edição habilitada!' : 'Modo de visualização ativo (edição bloqueada).');
+      return next;
+    });
   };
 
-  const handleLogout = () => {
-    setIsAuthenticated(false);
-    setAuthToken(null);
-    removeStoredToken();
-    showToast('Modo de edição bloqueado.');
+  const handleStartEditPerson = (person: PersonDebt) => {
+    setIsEditMode(true);
+    setPersonBeingEdited(person);
   };
+
+  // Debounced auto-save queue for inline cell edits
+  const saveTimeoutRef = useRef<{ [key: string]: NodeJS.Timeout }>({});
+
+  const handleUpdatePersonField = useCallback((personId: string, field: EditableField, value: any) => {
+    setData((prev) => {
+      let updatedTarget: PersonDebt | null = null;
+      const nextData = prev.map((item) => {
+        if (item.id !== personId) return item;
+        const recalculated = recalculatePersonValues(item, field, value);
+        updatedTarget = recalculated;
+        return recalculated;
+      });
+
+      if (updatedTarget) {
+        const targetToSave = updatedTarget;
+        if (saveTimeoutRef.current[personId]) {
+          clearTimeout(saveTimeoutRef.current[personId]);
+        }
+        saveTimeoutRef.current[personId] = setTimeout(async () => {
+          try {
+            await updatePersonApi(personId, targetToSave);
+          } catch (err) {
+            console.warn('Auto-save error, local data preserved:', err);
+          }
+        }, 500);
+      }
+
+      return nextData;
+    });
+  }, []);
 
   const handleSaveEditedPerson = async (updated: PersonDebt) => {
     try {
-      // Send changes (expectedFood, expectedReserve, name, etc.) to backend
-      const savedOnServer = await updatePersonApi(updated.id, updated, authToken || undefined);
+      const savedOnServer = await updatePersonApi(updated.id, updated);
       setData((prev) =>
         prev.map((item) => (item.id === savedOnServer.id ? savedOnServer : item))
       );
-      showToast(`Dados de ${savedOnServer.name} salvos com sucesso no servidor!`);
+      showToast(`Dados de ${savedOnServer.name} salvos com sucesso!`);
     } catch (err: any) {
       console.error(err);
-      if (err.message?.includes('Não autorizado') || err.message?.includes('401')) {
-        handleLogout();
-        setIsLoginModalOpen(true);
-        showToast('Sessão expirada. Faça login novamente para salvar.', true);
-      } else {
-        // Optimistic local update fallback
-        setData((prev) =>
-          prev.map((item) => (item.id === updated.id ? updated : item))
-        );
-        showToast(`Salvo localmente. (${err.message})`, true);
-      }
+      setData((prev) =>
+        prev.map((item) => (item.id === updated.id ? updated : item))
+      );
+      showToast(`Salvo localmente. (${err.message})`, true);
     }
   };
 
   const handleDeletePerson = async (personId: string) => {
     try {
-      const token = authToken || getStoredToken();
-      await deletePersonApi(personId, token || undefined);
+      await deletePersonApi(personId);
       setData((prev) => prev.filter((p) => String(p.id) !== String(personId)));
       showToast('Participante excluído com sucesso!');
     } catch (err: any) {
       console.error('Delete error:', err);
-      if (err.message?.includes('Não autorizado') || err.message?.includes('401')) {
-        handleLogout();
-        setIsLoginModalOpen(true);
-        showToast('Sessão expirada. Faça login novamente para excluir.', true);
-      } else {
-        setData((prev) => prev.filter((p) => String(p.id) !== String(personId)));
-        showToast('Excluído localmente. Falha ao sincronizar com servidor.', true);
-      }
+      setData((prev) => prev.filter((p) => String(p.id) !== String(personId)));
+      showToast('Excluído localmente.', true);
     }
   };
 
@@ -177,8 +181,7 @@ export default function App() {
     };
 
     try {
-      const token = authToken || getStoredToken();
-      const saved = await updatePersonApi(personId, updates, token || undefined);
+      const saved = await updatePersonApi(personId, updates);
       setData((prev) =>
         prev.map((p) => (p.id === personId ? saved : p))
       );
@@ -195,8 +198,7 @@ export default function App() {
   const handleExecuteResetData = async () => {
     setIsResetModalOpen(false);
     try {
-      const token = authToken || getStoredToken();
-      const fresh = await resetPersonsApi(token || undefined);
+      const fresh = await resetPersonsApi();
       setData(fresh);
       showToast('Dados restaurados para o estado original da planilha!');
     } catch {
@@ -207,7 +209,7 @@ export default function App() {
 
   const handleAddPerson = async (newPersonData: Omit<PersonDebt, 'id'>) => {
     try {
-      const created = await addPersonApi(newPersonData, authToken || undefined);
+      const created = await addPersonApi(newPersonData);
       setData((prev) => [...prev, created]);
       showToast(`Participante ${created.name} adicionado com sucesso!`);
     } catch (err: any) {
@@ -242,19 +244,53 @@ export default function App() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-7">
         {/* Header */}
         <Header
-          onOpenShareModal={() => setIsShareModalOpen(true)}
-          onResetData={() => setIsResetModalOpen(true)}
-          onAddNewPerson={() => {
-            if (isAuthenticated) {
-              setIsAddModalOpen(true);
-            } else {
-              setIsLoginModalOpen(true);
-            }
-          }}
-          isAuthenticated={isAuthenticated}
-          onOpenLoginModal={() => setIsLoginModalOpen(true)}
-          onLogout={handleLogout}
+          isEditMode={isEditMode}
+          onToggleEditMode={handleToggleEditMode}
+          onAddNewPerson={() => setIsAddModalOpen(true)}
         />
+
+        {/* Banner indicating Edit Mode is enabled */}
+        {isEditMode && (
+          <div
+            id="banner-edit-mode-active"
+            className="bg-emerald-50 border border-emerald-300 rounded-2xl p-3.5 sm:px-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs animate-fade-in"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold text-sm shrink-0 shadow-xs">
+                ✏️
+              </div>
+              <div>
+                <div className="text-xs font-bold text-emerald-950 flex items-center gap-1.5">
+                  <span>Função de Edição Habilitada</span>
+                  <span className="text-[10px] bg-emerald-200 text-emerald-900 font-bold px-1.5 py-0.5 rounded">
+                    Ativo
+                  </span>
+                </div>
+                <p className="text-[11px] text-emerald-800">
+                  Você pode editar participantes, alterar valores ou cadastrar novos. Ao finalizar, clique em Concluir Edição.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 self-end sm:self-auto shrink-0">
+              <button
+                type="button"
+                onClick={() => setIsResetModalOpen(true)}
+                className="text-xs font-semibold text-rose-700 hover:text-rose-800 bg-white hover:bg-rose-50 border border-rose-200 px-3 py-1.5 rounded-xl transition cursor-pointer"
+                title="Restaurar dados originais da planilha"
+              >
+                Restaurar Planilha
+              </button>
+              <button
+                type="button"
+                onClick={handleToggleEditMode}
+                className="text-xs font-bold text-emerald-900 bg-emerald-200 hover:bg-emerald-300 border border-emerald-400 px-3.5 py-1.5 rounded-xl transition cursor-pointer flex items-center gap-1"
+                title="Bloquear alterações e retornar ao modo de visualização segura"
+              >
+                <span>✓ Concluir Edição</span>
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Cash Flow & Account Balance Section */}
         <section id="section-cashflow" aria-label="Fluxo de Caixa e Saldo em Conta">
@@ -270,14 +306,7 @@ export default function App() {
         <section id="section-highlights" aria-label="Destaques e Resumo de Quitação">
           <SummaryHighlights
             data={data}
-            onOpenPaymentModal={(p) => {
-              if (isAuthenticated) {
-                setPersonBeingEdited(p);
-              } else {
-                setPendingPersonToEdit(p);
-                setIsLoginModalOpen(true);
-              }
-            }}
+            onOpenPaymentModal={handleStartEditPerson}
           />
         </section>
 
@@ -289,32 +318,21 @@ export default function App() {
                 Detalhamento Completo por Participante
               </h2>
               <p className="text-xs text-slate-500">
-                Visualize quem já pagou, quanto falta para cada um e atualize os recebimentos
+                Visualize quem já pagou, quanto falta para cada um e acompanhe os recebimentos
               </p>
             </div>
           </div>
           <DebtTable
             data={data}
-            isAuthenticated={isAuthenticated}
-            onEditPerson={(person) => setPersonBeingEdited(person)}
-            onRequireAuth={(person) => {
-              setPendingPersonToEdit(person);
-              setIsLoginModalOpen(true);
-            }}
+            isEditMode={isEditMode}
+            onEditPerson={handleStartEditPerson}
+            onUpdatePersonField={handleUpdatePersonField}
+            onToggleEditMode={handleToggleEditMode}
           />
         </section>
       </main>
 
-      {/* Modals */}
-      <LoginModal
-        isOpen={isLoginModalOpen}
-        onClose={() => {
-          setIsLoginModalOpen(false);
-          setPendingPersonToEdit(null);
-        }}
-        onSuccess={handleLoginSuccess}
-      />
-
+      {/* Edit Person Modal */}
       <EditPersonModal
         person={personBeingEdited}
         isOpen={!!personBeingEdited}
@@ -323,18 +341,21 @@ export default function App() {
         onDelete={handleDeletePerson}
       />
 
+      {/* Payment Modal */}
       <PaymentModal
         person={selectedPersonForPayment}
         onClose={() => setSelectedPersonForPayment(null)}
         onSavePayment={handleSavePayment}
       />
 
+      {/* WhatsApp Share Summary Modal */}
       <ShareSummaryModal
         isOpen={isShareModalOpen}
         onClose={() => setIsShareModalOpen(false)}
         data={data}
       />
 
+      {/* Add New Person Modal */}
       <AddPersonModal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}

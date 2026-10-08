@@ -1,5 +1,4 @@
 import { getPersons, addPerson } from './storage';
-import { isAdminAuthorized } from './auth';
 
 export default async function handler(req: any, res: any) {
   res.setHeader('Access-Control-Allow-Credentials', 'true');
@@ -25,14 +24,8 @@ export default async function handler(req: any, res: any) {
     }
   }
 
-  // POST: Add new person (protected)
+  // POST: Add new person
   if (req.method === 'POST') {
-    if (!isAdminAuthorized(req)) {
-      return res.status(401).json({
-        error: 'Não autorizado. Senha de administrador requerida para adicionar participantes.',
-      });
-    }
-
     try {
       const { name, category, expectedReserve, expectedFood, paidAmount, notes } = req.body || {};
       if (!name) {

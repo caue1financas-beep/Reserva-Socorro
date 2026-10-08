@@ -1,5 +1,4 @@
 import { resetPersons } from './storage';
-import { isAdminAuthorized } from './auth';
 
 export default async function handler(req: any, res: any) {
   res.setHeader('Access-Control-Allow-Credentials', 'true');
@@ -15,12 +14,6 @@ export default async function handler(req: any, res: any) {
   }
 
   if (req.method === 'POST') {
-    if (!isAdminAuthorized(req)) {
-      return res.status(401).json({
-        error: 'Não autorizado. Autenticação de administrador necessária para restaurar a lista.',
-      });
-    }
-
     try {
       const resetData = await resetPersons();
       return res.status(200).json({ success: true, data: resetData });

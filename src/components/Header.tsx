@@ -1,21 +1,19 @@
 import React, { useState } from 'react';
-import { Receipt, QrCode, Copy, Check, Lock, Unlock, LogOut, UserPlus } from 'lucide-react';
+import { Receipt, QrCode, Copy, Check, Edit3, UserPlus, Eye } from 'lucide-react';
 import { PIX_CONFIG } from '../utils/formatters';
 
 interface HeaderProps {
   onOpenShareModal?: () => void;
   onResetData?: () => void;
   onAddNewPerson?: () => void;
-  isAuthenticated: boolean;
-  onOpenLoginModal: () => void;
-  onLogout: () => void;
+  isEditMode: boolean;
+  onToggleEditMode: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
   onAddNewPerson,
-  isAuthenticated,
-  onOpenLoginModal,
-  onLogout,
+  isEditMode,
+  onToggleEditMode,
 }) => {
   const [copiedPix, setCopiedPix] = useState(false);
 
@@ -45,7 +43,7 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
       </div>
 
-      {/* Right side controls: Pix + Edit with Login */}
+      {/* Right side controls: Pix + Edit Function Toggle */}
       <div className="flex flex-wrap items-center gap-2.5 self-start lg:self-auto">
         {/* Pix Quick Access Badge */}
         <button
@@ -53,7 +51,7 @@ export const Header: React.FC<HeaderProps> = ({
           id="btn-header-copy-pix"
           onClick={handleCopyPix}
           title="Clique para copiar apenas a chave Pix"
-          className="bg-white hover:bg-slate-50 border border-slate-300 hover:border-slate-400 rounded-xl px-3 py-2 flex items-center gap-2 transition shadow-2xs group text-left"
+          className="bg-white hover:bg-slate-50 border border-slate-300 hover:border-slate-400 rounded-xl px-3 py-2 flex items-center gap-2 transition shadow-2xs group text-left cursor-pointer"
         >
           <div className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center justify-center shrink-0">
             <QrCode className="w-4 h-4" />
@@ -81,58 +79,51 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
         </button>
 
-        {/* Editar Button on the Right Side */}
-        {!isAuthenticated ? (
+        {/* Edit Function Toggle (No password required) */}
+        {!isEditMode ? (
           <button
             type="button"
-            id="btn-header-edit-mode"
-            onClick={onOpenLoginModal}
-            className="bg-white hover:bg-amber-50 border border-amber-300 hover:border-amber-400 text-amber-900 rounded-xl px-3.5 py-2 flex items-center gap-2.5 transition shadow-2xs group"
-            title="Clique para autenticar e habilitar modo de edição"
+            id="btn-header-enable-edit"
+            onClick={onToggleEditMode}
+            className="bg-white hover:bg-emerald-50 border border-slate-300 hover:border-emerald-500 text-slate-800 rounded-xl px-3.5 py-2 flex items-center gap-2.5 transition shadow-2xs group cursor-pointer"
+            title="Habilitar função de edição para alterar valores e participantes"
           >
-            <div className="w-7 h-7 rounded-lg bg-amber-100 text-amber-800 border border-amber-300 flex items-center justify-center shrink-0">
-              <Lock className="w-3.5 h-3.5" />
+            <div className="w-7 h-7 rounded-lg bg-slate-100 group-hover:bg-emerald-100 text-slate-700 group-hover:text-emerald-700 border border-slate-200 group-hover:border-emerald-300 flex items-center justify-center shrink-0 transition">
+              <Edit3 className="w-3.5 h-3.5" />
             </div>
             <div className="text-left">
-              <div className="text-[10px] font-bold uppercase tracking-wider text-amber-700">
-                Acesso Restrito
+              <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                Função de Edição
               </div>
-              <div className="text-xs font-bold text-slate-900 flex items-center gap-1">
-                <span>Editar</span>
+              <div className="text-xs font-bold text-slate-900 group-hover:text-emerald-700 flex items-center gap-1 transition">
+                <span>Habilitar Edição</span>
               </div>
             </div>
           </button>
         ) : (
           <div className="flex items-center gap-2">
-            <div className="bg-emerald-50 border border-emerald-300 rounded-xl px-3 py-1.5 flex items-center gap-2 shadow-2xs">
-              <div className="w-6 h-6 rounded-md bg-emerald-600 text-white flex items-center justify-center shrink-0">
-                <Unlock className="w-3.5 h-3.5" />
-              </div>
-              <div>
-                <div className="text-[10px] font-bold uppercase text-emerald-800 leading-tight">Modo Edição Ativo</div>
-                <div className="text-[11px] font-semibold text-emerald-950">Administrador</div>
-              </div>
-            </div>
-
             {onAddNewPerson && (
               <button
                 type="button"
+                id="btn-header-add-person"
                 onClick={onAddNewPerson}
-                className="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-xs"
-                title="Adicionar novo participante"
+                className="bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-xs cursor-pointer"
+                title="Adicionar novo participante à lista"
               >
                 <UserPlus className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">+ Novo</span>
+                <span>+ Novo Participante</span>
               </button>
             )}
 
             <button
               type="button"
-              onClick={onLogout}
-              className="bg-white hover:bg-rose-50 text-rose-700 border border-rose-200 hover:border-rose-300 p-2 rounded-xl text-xs font-semibold transition"
-              title="Sair do modo de edição (bloquear)"
+              id="btn-header-finish-edit"
+              onClick={onToggleEditMode}
+              className="bg-white hover:bg-slate-100 text-slate-800 border border-slate-300 hover:border-slate-400 px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-2xs cursor-pointer"
+              title="Concluir e voltar ao modo de visualização protegida"
             >
-              <LogOut className="w-4 h-4" />
+              <Eye className="w-3.5 h-3.5 text-slate-600" />
+              <span>Concluir Edição</span>
             </button>
           </div>
         )}

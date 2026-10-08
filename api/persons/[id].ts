@@ -1,5 +1,4 @@
 import { updatePerson, deletePerson } from '../storage';
-import { isAdminAuthorized } from '../auth';
 
 export default async function handler(req: any, res: any) {
   res.setHeader('Access-Control-Allow-Credentials', 'true');
@@ -19,13 +18,6 @@ export default async function handler(req: any, res: any) {
 
   if (!id) {
     return res.status(400).json({ error: 'ID do participante não informado' });
-  }
-
-  // Authentication check for protected actions (Edit and Delete)
-  if (!isAdminAuthorized(req)) {
-    return res.status(401).json({
-      error: 'Não autorizado. Autenticação de administrador necessária para editar ou excluir.',
-    });
   }
 
   // PUT / PATCH: Edit person values (including expectedFood and expectedReserve)
